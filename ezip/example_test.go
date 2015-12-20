@@ -5,13 +5,14 @@
 package zip_test
 
 import (
-	"archive/zip"
 	"bytes"
 	"compress/flate"
 	"fmt"
 	"io"
 	"log"
 	"os"
+
+	zip "github.com/glycerine/libzipfs/ezip"
 )
 
 func ExampleWriter() {
