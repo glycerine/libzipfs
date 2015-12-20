@@ -47,6 +47,13 @@ func (f *File) hasDataDescriptor() bool {
 
 // OpenReader will open the Zip file specified by name and return a ReadCloser.
 func OpenReader(name string) (*ReadCloser, error) {
+	return OpenReaderAt(name, 0, 0)
+}
+
+// OpenReader will open the Zip file specified by name and return a ReadCloser.
+// For reading a zipfile embedded in another file, specify start and size,
+// where the zipfile bytes go from [start, start+size) within name.
+func OpenReaderAt(name string, start int64, size int64) (*ReadCloser, error) {
 	f, err := os.Open(name)
 	if err != nil {
 		return nil, err
@@ -57,7 +64,16 @@ func OpenReader(name string) (*ReadCloser, error) {
 		return nil, err
 	}
 	r := new(ReadCloser)
-	if err := r.init(f, fi.Size()); err != nil {
+
+	var rat io.ReaderAt
+	if start > 0 || size > 0 {
+		rat = io.NewSectionReader(f, start, size)
+	} else {
+		rat = f
+		size = fi.Size()
+	}
+
+	if err := r.init(rat, size); err != nil {
 		f.Close()
 		return nil, err
 	}
@@ -100,6 +116,7 @@ func (z *Reader) init(r io.ReaderAt, size int64) error {
 		f := &File{zip: z, zipr: r, zipsize: size}
 		err = readDirectoryHeader(f, buf)
 		if err == ErrFormat || err == io.ErrUnexpectedEOF {
+			fmt.Printf("\n err after readDirectoryHeader(): '%v'\n", err)
 			break
 		}
 		if err != nil {
@@ -252,10 +269,13 @@ func (f *File) findBodyOffset() (int64, error) {
 func readDirectoryHeader(f *File, r io.Reader) error {
 	var buf [directoryHeaderLen]byte
 	if _, err := io.ReadFull(r, buf[:]); err != nil {
+		fmt.Printf("\n err after io.ReadFull(): '%v'\n", err)
 		return err
 	}
 	b := readBuf(buf[:])
 	if sig := b.uint32(); sig != directoryHeaderSignature {
+		fmt.Printf("\n err after sig != directoryHeaderSignature. sig='%#v'  direcotryHeaderSignature='%x'. buf = '%s'/'%x'\n",
+			sig, directoryHeaderSignature, string(buf[:]), buf[:])
 		return ErrFormat
 	}
 	f.CreatorVersion = b.uint16()

@@ -91,9 +91,9 @@ func (p *FuseZipFs) Start() error {
 		if err != nil {
 			return err
 		}
-		p.bytesAvail = statinfo.Size()
+		p.bytesAvail = statinfo.Size() - p.offset
 		if p.bytesAvail <= 0 {
-			return fmt.Errorf("FuseZipFs.Start() error: zero bytes available to read from ZipfilePath '%s'", p.ZipfilePath)
+			return fmt.Errorf("FuseZipFs.Start() error: no bytes available to read from ZipfilePath '%s' (of size %d bytes) after subtracting offset %d", p.ZipfilePath, statinfo.Size(), p.offset)
 		}
 	}
 
