@@ -5,13 +5,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
-
-	"bytes"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -268,64 +264,4 @@ func (fh *FileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fus
 	}
 	resp.Data = buf[:n]
 	return err
-}
-
-func WaitUntilMounted(mountPoint string) error {
-
-	mpBytes := []byte(mountPoint)
-	dur := 3 * time.Millisecond
-	tries := 40
-	var found bool
-	for i := 0; i < tries; i++ {
-		out, err := exec.Command(`/sbin/mount`).Output()
-		if err != nil {
-			return fmt.Errorf("could not query for mount points with /sbin/mount: '%s'", err)
-		}
-		VPrintf("\n out = '%s'\n", string(out))
-		found = bytes.Contains(out, mpBytes)
-		if found {
-			VPrintf("\n found mountPoint '%s' on try %d\n", mountPoint, i+1)
-			return nil
-		}
-		time.Sleep(dur)
-	}
-	return fmt.Errorf("WaitUntilMounted() error: could not locate mount point '%s' in /sbin/mount output, "+
-		"even after %d tries with %v sleep between.", mountPoint, tries, dur)
-}
-
-func (p *FuseZipFs) unmount() error {
-
-	err := exec.Command(`/sbin/umount`, p.MountPoint).Run()
-	if err != nil {
-		return fmt.Errorf("Unmount() error: could not /sbin/umount %s: '%s'", p.MountPoint, err)
-	}
-
-	err = WaitUntilUnmounted(p.MountPoint)
-	if err != nil {
-		return fmt.Errorf("Unmount() error: tried to wait for mount %s to become unmounted, but got error: '%s'", p.MountPoint, err)
-	}
-	return nil
-}
-
-func WaitUntilUnmounted(mountPoint string) error {
-
-	mpBytes := []byte(mountPoint)
-	dur := 3 * time.Millisecond
-	tries := 40
-	var found bool
-	for i := 0; i < tries; i++ {
-		out, err := exec.Command(`/sbin/mount`).Output()
-		if err != nil {
-			return fmt.Errorf("could not query for mount points with /sbin/mount: '%s'", err)
-		}
-		VPrintf("\n out = '%s'\n", string(out))
-		found = bytes.Contains(out, mpBytes)
-		if !found {
-			VPrintf("\n mountPoint '%s' was not in mount output on try %d\n", mountPoint, i+1)
-			return nil
-		}
-		time.Sleep(dur)
-	}
-	return fmt.Errorf("WaitUntilUnmounted() error: mount point '%s' in /sbin/mount was always present, "+
-		"even after %d waits with %v sleep between each.", mountPoint, tries, dur)
 }
