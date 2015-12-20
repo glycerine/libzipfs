@@ -3,6 +3,7 @@ package libzipfs
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -59,6 +60,47 @@ func NewFuseZipFs(zipFilePath, mountpoint string, byteOffsetToZipFileStart int64
 	}
 
 	return p
+}
+
+// The Main API entry point for mounting a combo file vis FUSE to make
+// the embedded Zip file directory available. Users should call
+// fzfs.Stop() when/if they wish to stop serving files at mountpoint.
+//
+func MountComboZip() (fzfs *FuseZipFs, mountpoint string, err error) {
+	comboFilePath := os.Args[0]
+	fzfs, mountpoint, err = NewFuzeZipFsFromCombo(comboFilePath)
+	if err != nil {
+		return nil, "", err
+	}
+	err = fzfs.Start()
+	if err != nil {
+		return nil, "", err
+	}
+	return fzfs, mountpoint, nil
+}
+
+// mount the comboFilePath file in a temp directory mountpoint created
+// just for this purpose, and return the mountpoint and a handle to the
+// fuse fileserver in fzfs.
+func NewFuzeZipFsFromCombo(comboFilePath string) (fzfs *FuseZipFs, mountpoint string, err error) {
+	dir := "" // => use system tmp dir
+	mountPoint, err := ioutil.TempDir(dir, "libzipfs.auto-combo.")
+	if err != nil {
+		return nil, "", fmt.Errorf("NewFuzeZipFsFromCombo() error, could not create mountpoint: '%s'", err)
+	}
+	VPrintf("\n\n mountPoint = '%s'\n", mountPoint)
+
+	_, foot, comb, err := ReadFooter(comboFilePath)
+	if err != nil {
+		return nil, "", fmt.Errorf("NewFuzeZipFsFromCombo() error, could not reader "+
+			"Footer from comboFilePath '%s': '%s'",
+			comboFilePath, err)
+	}
+	defer comb.Close()
+	byteOffsetToZipFileStart := foot.ExecutableLengthBytes
+
+	z := NewFuseZipFs(comboFilePath, mountPoint, byteOffsetToZipFileStart, foot.ZipfileLengthBytes, LIBZIPFS_FOOTER_LEN)
+	return z, mountPoint, nil
 }
 
 func (p *FuseZipFs) Stop() error {

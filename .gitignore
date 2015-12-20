@@ -1,5 +1,8 @@
 *~
 cmd/libzipfs-combiner/libzipfs-combiner
+api-demo-combo
+testfiles/api-demo
+api-demo
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o
