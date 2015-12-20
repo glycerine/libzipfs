@@ -50,9 +50,13 @@ func OpenReader(name string) (*ReadCloser, error) {
 	return OpenReaderAt(name, 0, 0)
 }
 
-// OpenReader will open the Zip file specified by name and return a ReadCloser.
-// For reading a zipfile embedded in another file, specify start and size,
-// where the zipfile bytes go from [start, start+size) within name.
+// For reading a Zipfile embedded inside the file specified by name, give
+// the start and size lengths in bytes. The zipfile bytes are expected to
+// reside from [start, start+size) within the file named by 'name'.
+//
+// OpenReaderAt is otherwise the same as OpenReader, and returns a ReadCloser
+// for the Zipfile within name. If size is 0 it will be taken to be the
+// full length of the file on disk, minus any supplied start offset.
 func OpenReaderAt(name string, start int64, size int64) (*ReadCloser, error) {
 	f, err := os.Open(name)
 	if err != nil {
@@ -65,11 +69,10 @@ func OpenReaderAt(name string, start int64, size int64) (*ReadCloser, error) {
 	}
 	r := new(ReadCloser)
 
-	var rat io.ReaderAt
 	if size <= 0 {
 		size = fi.Size() - start
 	}
-	rat = io.NewSectionReader(f, start, size)
+	rat := io.NewSectionReader(f, start, size)
 
 	if err := r.init(rat, size); err != nil {
 		f.Close()
@@ -91,7 +94,6 @@ func NewReader(r io.ReaderAt, size int64) (*Reader, error) {
 
 func (z *Reader) init(r io.ReaderAt, size int64) error {
 	end, err := readDirectoryEnd(r, size)
-	//fmt.Printf("dirEnd = '%#v'\n", end)
 	if err != nil {
 		return err
 	}
@@ -115,7 +117,6 @@ func (z *Reader) init(r io.ReaderAt, size int64) error {
 		f := &File{zip: z, zipr: r, zipsize: size}
 		err = readDirectoryHeader(f, buf)
 		if err == ErrFormat || err == io.ErrUnexpectedEOF {
-			//fmt.Printf("\n err after readDirectoryHeader(): '%v'\n", err)
 			break
 		}
 		if err != nil {
@@ -268,13 +269,10 @@ func (f *File) findBodyOffset() (int64, error) {
 func readDirectoryHeader(f *File, r io.Reader) error {
 	var buf [directoryHeaderLen]byte
 	if _, err := io.ReadFull(r, buf[:]); err != nil {
-		//fmt.Printf("\n err after io.ReadFull(): '%v'\n", err)
 		return err
 	}
 	b := readBuf(buf[:])
 	if sig := b.uint32(); sig != directoryHeaderSignature {
-		//fmt.Printf("\n err after sig != directoryHeaderSignature. sig='%#v'  direcotryHeaderSignature='%x'. buf = '%s'/'%x'\n",
-		//	sig, directoryHeaderSignature, string(buf[:]), buf[:])
 		return ErrFormat
 	}
 	f.CreatorVersion = b.uint16()

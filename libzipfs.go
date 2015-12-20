@@ -36,11 +36,17 @@ type FuseZipFs struct {
 	filesys *FS
 	archive *zip.ReadCloser
 
-	offset     int64
-	bytesAvail int64 // -1 => unknown
+	offset      int64
+	bytesAvail  int64 // -1 => unknown
+	footerBytes int64
 }
 
-func NewFuseZipFs(zipFilePath, mountpoint string, byteOffsetToZipFileStart int64, bytesAvail int64) *FuseZipFs {
+// Mount a possibly combined/zipfile at mountpiont. Call Start() to start servicing fuse reads.
+//
+// If the file has a libzipfs footer on it, set footerBytes == LIBZIPFS_FOOTER_LEN.
+// The bytesAvail value should describe how long the zipfile is in bytes, and byteOffsetToZipFileStart
+// should describe how far into the (possibly combined) zipFilePath the actual zipfile starts.
+func NewFuseZipFs(zipFilePath, mountpoint string, byteOffsetToZipFileStart int64, bytesAvail int64, footerBytes int64) *FuseZipFs {
 	p := &FuseZipFs{
 		ZipfilePath: zipFilePath,
 		MountPoint:  mountpoint,
@@ -49,6 +55,7 @@ func NewFuseZipFs(zipFilePath, mountpoint string, byteOffsetToZipFileStart int64
 		Done:        make(chan bool),
 		offset:      byteOffsetToZipFileStart,
 		bytesAvail:  bytesAvail,
+		footerBytes: footerBytes,
 	}
 
 	return p
@@ -91,7 +98,7 @@ func (p *FuseZipFs) Start() error {
 		if err != nil {
 			return err
 		}
-		p.bytesAvail = statinfo.Size() - p.offset
+		p.bytesAvail = statinfo.Size() - (p.offset + p.footerBytes)
 		if p.bytesAvail <= 0 {
 			return fmt.Errorf("FuseZipFs.Start() error: no bytes available to read from ZipfilePath '%s' (of size %d bytes) after subtracting offset %d", p.ZipfilePath, statinfo.Size(), p.offset)
 		}

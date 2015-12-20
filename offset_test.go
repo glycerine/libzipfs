@@ -23,7 +23,7 @@ func Test004WeCanMountAnOffsetZipFile(t *testing.T) {
 		comboFile := "testfiles/padded8hi"
 
 		byteOffsetToZipFileStart := int64(8)
-		z := NewFuseZipFs(comboFile, mountPoint, byteOffsetToZipFileStart, 478)
+		z := NewFuseZipFs(comboFile, mountPoint, byteOffsetToZipFileStart, 478, 0)
 
 		err = z.Start()
 		if err != nil {
@@ -73,7 +73,7 @@ func Test004bWeCanMountARegularZipFile(t *testing.T) {
 		comboFile := "testfiles/hi.zip"
 
 		byteOffsetToZipFileStart := int64(0)
-		z := NewFuseZipFs(comboFile, mountPoint, byteOffsetToZipFileStart, 478)
+		z := NewFuseZipFs(comboFile, mountPoint, byteOffsetToZipFileStart, 478, 0)
 
 		err = z.Start()
 		if err != nil {
@@ -126,7 +126,7 @@ func Test006WeCanMountAnOffsetComboFile(t *testing.T) {
 		defer comb.Close()
 		byteOffsetToZipFileStart := foot.ExecutableLengthBytes
 
-		z := NewFuseZipFs(comboFile, mountPoint, byteOffsetToZipFileStart, foot.ZipfileLengthBytes)
+		z := NewFuseZipFs(comboFile, mountPoint, byteOffsetToZipFileStart, foot.ZipfileLengthBytes, LIBZIPFS_FOOTER_LEN)
 
 		err = z.Start()
 		if err != nil {
