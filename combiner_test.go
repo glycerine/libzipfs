@@ -23,7 +23,7 @@ func Test002CombinerAndSplitterAreInverses(t *testing.T) {
 		defer os.Remove(testOutputPath.Name())
 
 		var cfg CombinerConfig
-		cfg.OutputPath = testOutputPath.Name() // should resember "testfiles/expectedCombined" at the end.
+		cfg.OutputPath = testOutputPath.Name() // should resemble "testfiles/expectedCombined" at the end.
 		cfg.ExecutablePath = "testfiles/tester"
 		cfg.ZipfilePath = "testfiles/hi.zip"
 

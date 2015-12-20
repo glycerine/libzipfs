@@ -104,10 +104,10 @@ func (f *Footer) FromBytes(by []byte) {
 	VPrintf("FromBytes() debug: read f = '%#v' from bytes '%x'\n", *f, string(by))
 }
 
-func compareBlake2(a, b []byte) (diffpos int, err error) {
-	for i := 0; i < 64; i++ {
+func compareByteSlices(a, b []byte, sz int) (diffpos int, err error) {
+	for i := 0; i < sz; i++ {
 		if a[i] != b[i] {
-			return i, fmt.Errorf("blake2 checksums differ as position %d", i)
+			return i, fmt.Errorf("first difference at position %d (out of %d)", i, sz)
 		}
 	}
 	return -1, nil

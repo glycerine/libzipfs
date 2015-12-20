@@ -23,7 +23,13 @@ func DoSplitOutExeAndZip(cfg *CombinerConfig) (*Footer, error) {
 	// cfg.OutputPath is our input now.
 	combi, err := os.Stat(cfg.OutputPath)
 	panicOn(err)
-	VPrintf("combi = '%#v'", combi)
+	VPrintf("\n combi = '%#v'\n", combi)
+
+	if combi.Size() < LIBZIPFS_FOOTER_LEN {
+		return nil, fmt.Errorf("path to split '%s' smaller (bytes=%d) than "+
+			"footer(bytes=%d), cannot be a combiner output file",
+			cfg.OutputPath, combi.Size(), LIBZIPFS_FOOTER_LEN)
+	}
 
 	comb, err := os.Open(cfg.OutputPath)
 	panicOn(err)
@@ -34,28 +40,17 @@ func DoSplitOutExeAndZip(cfg *CombinerConfig) (*Footer, error) {
 
 	by := make([]byte, LIBZIPFS_FOOTER_LEN)
 	n, err := comb.Read(by)
-	if err != io.EOF {
+	if err != io.EOF && err != nil {
 		panicOn(err)
 	}
 	if n != LIBZIPFS_FOOTER_LEN {
-		panic(fmt.Errorf("%d == n != LIBZIPFS_FOOTER_LEN == %d", n, LIBZIPFS_FOOTER_LEN))
+		return nil, fmt.Errorf("%d == n != LIBZIPFS_FOOTER_LEN == %d", n, LIBZIPFS_FOOTER_LEN)
 	}
 
-	var foot Footer
-	foot.FromBytes(by[:])
-
-	// check the checksum
-	chk := foot.GetFooterChecksum()
-	for i := 0; i < 64; i++ {
-		if chk[i] != foot.FooterBlake2Checksum[i] {
-			return &foot, fmt.Errorf("DoSplitOutexeAndZip() error: reified footer from file '%s' does not have the expected checksum, file corrupt or not a combined file?  at i=%d, disk position footerStartOffset=%d, computed footer checksum='%x', versus read-from-disk footer checksum = '%x'", cfg.OutputPath, i, footerStartOffset, chk, foot.FooterBlake2Checksum)
-		}
-	}
-
-	// validate that the component sizes add up
-	sumFirstTwo := foot.ZipfileLengthBytes + foot.ExecutableLengthBytes
-	if footerStartOffset != sumFirstTwo {
-		return &foot, fmt.Errorf("DoSplitOutExeAndZip() error: consistency check failed: footerStartOffset(%d) != foot.ZipfileLengthBytes(%d) + foot.ExecutableLengthBytes(%d) == %d", footerStartOffset, foot.ZipfileLengthBytes, foot.ExecutableLengthBytes, sumFirstTwo)
+	// must return err if foot is bad
+	foot, err := ReifyFooterAndDoInexpensiveChecks(by[:], cfg, footerStartOffset)
+	if err != nil {
+		return nil, err
 	}
 
 	// create the split out exe and zip files
@@ -83,5 +78,39 @@ func DoSplitOutExeAndZip(cfg *CombinerConfig) (*Footer, error) {
 
 	err = foot.VerifyExeZipChecksums(cfg)
 
-	return &foot, err
+	return foot, err
+}
+
+// must return err if foot is bad
+func ReifyFooterAndDoInexpensiveChecks(by []byte, cfg *CombinerConfig, footerStartOffset int64) (*Footer, error) {
+	var err error
+	var foot Footer
+	foot.FromBytes(by[:])
+
+	// NB must use len(MAGIC1) instead of MAGIC_NUM_LEN since len(MAGIC1) is smaller
+	_, err = compareByteSlices(foot.MagicFooterNumber1[:len(MAGIC1)], MAGIC1, len(MAGIC1))
+	if err != nil {
+		return nil, fmt.Errorf("footer magic number1 not found")
+	}
+
+	_, err = compareByteSlices(foot.MagicFooterNumber2[:len(MAGIC2)], MAGIC2, len(MAGIC2))
+	if err != nil {
+		return nil, fmt.Errorf("footer magic number2 not found")
+	}
+
+	// check the checksum over the footer itself
+	chk := foot.GetFooterChecksum()
+	for i := 0; i < 64; i++ {
+		if chk[i] != foot.FooterBlake2Checksum[i] {
+			return nil, fmt.Errorf("DoSplitOutexeAndZip() error: reified footer from file '%s' does not have the expected checksum, file corrupt or not a combined file?  at i=%d, disk position footerStartOffset=%d, computed footer checksum='%x', versus read-from-disk footer checksum = '%x'", cfg.OutputPath, i, footerStartOffset, chk, foot.FooterBlake2Checksum)
+		}
+	}
+
+	// validate that the component sizes add up
+	sumFirstTwo := foot.ZipfileLengthBytes + foot.ExecutableLengthBytes
+	if footerStartOffset != sumFirstTwo {
+		return nil, fmt.Errorf("DoSplitOutExeAndZip() error: consistency check failed: footerStartOffset(%d) != foot.ZipfileLengthBytes(%d) + foot.ExecutableLengthBytes(%d) == %d", footerStartOffset, foot.ZipfileLengthBytes, foot.ExecutableLengthBytes, sumFirstTwo)
+	}
+
+	return &foot, nil
 }

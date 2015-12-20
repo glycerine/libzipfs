@@ -18,22 +18,24 @@ var MAGIC1 = []byte("\nLibZipFs00\n")
 var MAGIC2 = []byte("\nLibZipFsEnd\n")
 
 const LIBZIPFS_FOOTER_LEN = 256
+const BLAKE2_HASH_LEN = 64
+const MAGIC_NUM_LEN = 16
 
 type FooterArray [LIBZIPFS_FOOTER_LEN]byte
 
 type Footer struct {
 	Reserved1          int64
-	MagicFooterNumber1 [16]byte
+	MagicFooterNumber1 [MAGIC_NUM_LEN]byte
 
 	ExecutableLengthBytes int64
 	ZipfileLengthBytes    int64
 	FooterLengthBytes     int64
 
-	ExecutableBlake2Checksum [64]byte
-	ZipfileBlake2Checksum    [64]byte
-	FooterBlake2Checksum     [64]byte // has itself set to zero when taking the hash.
+	ExecutableBlake2Checksum [BLAKE2_HASH_LEN]byte
+	ZipfileBlake2Checksum    [BLAKE2_HASH_LEN]byte
+	FooterBlake2Checksum     [BLAKE2_HASH_LEN]byte // has itself set to zero when taking the hash.
 
-	MagicFooterNumber2 [16]byte
+	MagicFooterNumber2 [MAGIC_NUM_LEN]byte
 }
 
 type CombinerConfig struct {
@@ -184,18 +186,18 @@ func (foot *Footer) VerifyExeZipChecksums(cfg *CombinerConfig) (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = compareBlake2(foot.ExecutableBlake2Checksum[:], hash)
+	_, err = compareByteSlices(foot.ExecutableBlake2Checksum[:], hash, BLAKE2_HASH_LEN)
 	if err != nil {
-		return fmt.Errorf("executable checksum mismatch: '%s'", err)
+		return fmt.Errorf("executable blake2 checksum mismatch: '%s'", err)
 	}
 
 	hash, _, err = Blake2HashFile(cfg.ZipfilePath)
 	if err != nil {
 		return err
 	}
-	_, err = compareBlake2(foot.ZipfileBlake2Checksum[:], hash)
+	_, err = compareByteSlices(foot.ZipfileBlake2Checksum[:], hash, BLAKE2_HASH_LEN)
 	if err != nil {
-		return fmt.Errorf("zipfile checksum mismatch: '%s'", err)
+		return fmt.Errorf("zipfile blake2 checksum mismatch: '%s'", err)
 	}
 	return nil
 }
