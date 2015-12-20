@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -42,10 +43,14 @@ func WaitUntilMounted(mountPoint string) error {
 //
 // linux when regular user umount attempts:
 //  getting error: umount: /tmp/libzipfs694201669 is not in the fstab (and you are not root)
-//
+//   => need to do fusermount -u mnt  instead of umount
 func (p *FuseZipFs) unmount() error {
+	args := []string{p.MountPoint}
+	if strings.HasSuffix(utilLoc.UmountPath, `fusermount`) {
+		args = []string{"-u", p.MountPoint}
+	}
 
-	out, err := exec.Command(utilLoc.UmountPath, p.MountPoint).CombinedOutput()
+	out, err := exec.Command(utilLoc.UmountPath, args...).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("Unmount() error: could not %s %s: '%s' / output: '%s'", utilLoc.UmountPath, p.MountPoint, err, string(out))
 	}
@@ -104,7 +109,8 @@ func FindMount() error {
 }
 
 func FindUmount() error {
-	candidates := []string{`/sbin/umount`, `/bin/umount`, `/usr/sbin/umount`, `/usr/bin/umount`}
+	// put the linux fusermount utils first
+	candidates := []string{`/bin/fusermount`, `/sbin/fusermount`, `/sbin/umount`, `/bin/umount`, `/usr/sbin/umount`, `/usr/bin/umount`}
 	for _, f := range candidates {
 		if FileExists(f) {
 			utilLoc.UmountPath = f
