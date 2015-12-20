@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"os"
+	"os/exec"
 	"testing"
 
 	cv "github.com/glycerine/goconvey/convey"
@@ -19,10 +19,10 @@ func Test002CombinerAndSplitterAreInverses(t *testing.T) {
 	cv.Convey("out footer should report the proper sizes for the input exe and .zip files", t, func() {
 		testOutputPath, err := ioutil.TempFile("", "libzipfs.test.")
 		panicOn(err)
-		defer os.Remove(testOutputPath.Name())
+		//defer os.Remove(testOutputPath.Name())
 
 		var cfg CombinerConfig
-		cfg.OutputPath = testOutputPath.Name()
+		cfg.OutputPath = testOutputPath.Name() // should resember "testfiles/expectedCombined" at the end.
 		cfg.ExecutablePath = "testfiles/tester"
 		cfg.ZipfilePath = "testfiles/hi.zip"
 
@@ -48,5 +48,38 @@ func Test002CombinerAndSplitterAreInverses(t *testing.T) {
 		cv.So(fmt.Sprintf("%x", foot.ExecutableBlake2Checksum), cv.ShouldResemble, `61af446f097d3b6c80a910dc295c1aef98f760a61ba3d324d98f134193a79d86ee7db4c46ca33a55879bc561638d0eaed774124d73d2776b21d8b697b98cc04a`)
 		cv.So(fmt.Sprintf("%x", foot.ZipfileBlake2Checksum), cv.ShouldResemble, `13dad78f512d559c9661e23fe77040f6b08134ab7a29f90ac94c4280454e0973dc95ea034586621392dc8d02b8166326ffa812de9dbc9e1b471f977d8907d719`)
 		cv.So(fmt.Sprintf("%x", foot.FooterBlake2Checksum), cv.ShouldResemble, `a24fb6f047d66d431e166abc8d008755d3cdfe2b07f4c06b256912151feb114c7cea606b35726e1ae2d2c133b50a7360fe2fce7ca950086f97aa58479e057a22`)
+
+		// first combine files
+		err = DoCombineExeAndZip(&cfg)
+		panicOn(err)
+
+		expectedOutPath := "testfiles/expectedCombined"
+		data, err := exec.Command("diff", "-u", cfg.OutputPath, expectedOutPath).CombinedOutput()
+		if len(data) > 0 {
+			panic(fmt.Errorf("combiner error: generated output in '%s' did not match expected output in '%s'. diff output: '%s'", cfg.OutputPath, expectedOutPath, string(data)))
+		}
+		panicOn(err)
+
+		// now split it back apart and check it
+		splitCfg := cfg
+
+		testSplitToExePath, err := ioutil.TempFile("", "libzipfs.test.")
+		panicOn(err)
+		//defer testSplitToExePath.Close()
+		//defer os.Remove(testSplitToExePath.Name())
+
+		testSplitToZipPath, err := ioutil.TempFile("", "libzipfs.test.")
+		panicOn(err)
+		//defer testSplitToZipPath.Close()
+		//defer os.Remove(testSplitToZipPath.Name())
+
+		splitCfg.ExecutablePath = testSplitToExePath.Name()
+		splitCfg.ZipfilePath = testSplitToZipPath.Name()
+		splitCfg.Split = true
+
+		fmt.Printf("splitCfg = %#v\n", splitCfg)
+		recoveredFoot, err := DoSplitOutExeAndZip(&splitCfg)
+		panicOn(err)
+		cv.So(recoveredFoot, cv.ShouldResemble, &foot)
 	})
 }
