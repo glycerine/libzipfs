@@ -53,10 +53,12 @@ func OpenReader(name string) (*ReadCloser, error) {
 // For reading a Zipfile embedded inside the file specified by name, give
 // the start and size lengths in bytes. The zipfile bytes are expected to
 // reside from [start, start+size) within the file named by 'name'.
+// If size is 0 it will inferred from the size returned by os.Stat() as
+// the full length of the file on disk minus any supplied start.
 //
 // OpenReaderAt is otherwise the same as OpenReader, and returns a ReadCloser
-// for the Zipfile within name. If size is 0 it will be taken to be the
-// full length of the file on disk, minus any supplied start offset.
+// for the Zipfile within name. OpenReader(name) is equivalent to a call to
+// OpenReaderAt(name, 0, 0).
 func OpenReaderAt(name string, start int64, size int64) (*ReadCloser, error) {
 	f, err := os.Open(name)
 	if err != nil {
