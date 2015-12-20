@@ -8,7 +8,7 @@ import (
 	cv "github.com/glycerine/goconvey/convey"
 )
 
-func TestWeCanMountInTheTmpDir(t *testing.T) {
+func Test001WeCanMountInTheTmpDir(t *testing.T) {
 
 	cv.Convey("we should be able to mount a zipfile image in the tmp dir", t, func() {
 		dir := "/tmp" // "" => use system tmp dir

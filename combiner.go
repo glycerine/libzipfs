@@ -14,6 +14,24 @@ import (
 	"os"
 )
 
+var MAGIC1 = []byte("\nLibZipFs00\n")
+var MAGIC2 = []byte("\nLibZipFsEnd\n")
+
+type Footer struct {
+	Reserved1          int64
+	MagicFooterNumber1 [16]byte
+
+	ExecutableLengthBytes int64
+	ZipfileLengthBytes    int64
+	FooterLengthBytes     int64
+
+	ExecutableBlake2Checksum [64]byte
+	ZipfileBlake2Checksum    [64]byte
+	FooterBlake2Checksum     [64]byte // has itself set to zero when taking the hash.
+
+	MagicFooterNumber2 [16]byte
+}
+
 type CombinerConfig struct {
 	ExecutablePath string
 	ZipfilePath    string
@@ -145,24 +163,6 @@ func DoCombineExeAndZip(cfg *CombinerConfig) error {
 	panicOn(err)
 
 	return nil
-}
-
-var MAGIC1 = []byte("\nLibZipFs00\n")
-var MAGIC2 = []byte("\nLibZipFsEnd\n")
-
-type Footer struct {
-	Reserved1          int64
-	MagicFooterNumber1 [16]byte
-
-	ExecutableLengthBytes int64
-	ZipfileLengthBytes    int64
-	FooterLengthBytes     int64
-
-	ExecutableBlake2Checksum [64]byte
-	ZipfileBlake2Checksum    [64]byte
-	FooterBlake2Checksum     [64]byte // has itself set to zero when taking the hash.
-
-	MagicFooterNumber2 [16]byte
 }
 
 func panicOn(err error) {

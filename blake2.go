@@ -37,12 +37,15 @@ func (foot *Footer) FillHashes(cfg *CombinerConfig) error {
 	foot.FooterLengthBytes = 256
 
 	ser := foot.ToBytes()
+	fmt.Printf("ser = '%x'\n", ser)
 
 	h := blake2.New(nil)
 	h.Write(ser)
 	hash = h.Sum(nil)
 
-	copy(foot.ExecutableBlake2Checksum[:], hash)
+	copy(foot.FooterBlake2Checksum[:], hash)
+	fmt.Printf("debug: foot.FooterBlake2Checksum = '%x'\n", foot.FooterBlake2Checksum)
+
 	return nil
 }
 
