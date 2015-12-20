@@ -2,13 +2,16 @@ package libzipfs
 
 import (
 	"archive/zip"
-	"flag"
 	"fmt"
 	"io"
-	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
+
+	"bytes"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -19,54 +22,95 @@ import (
 
 var progName = filepath.Base(os.Args[0])
 
-func usage() {
-	fmt.Fprintf(os.Stderr, "Usage of %s:\n", progName)
-	fmt.Fprintf(os.Stderr, "  %s ZIP MOUNTPOINT\n", progName)
-	flag.PrintDefaults()
+type FuseZipFs struct {
+	ZipfilePath string
+	MountPoint  string
+
+	Ready   chan bool
+	ReqStop chan bool
+	Done    chan bool
+
+	mut      sync.Mutex
+	stopped  bool
+	serveErr error
+	connErr  error
+	conn     *fuse.Conn
 }
 
-func main() {
-	log.SetFlags(0)
-	log.SetPrefix(progName + ": ")
-
-	flag.Usage = usage
-	flag.Parse()
-
-	if flag.NArg() != 2 {
-		usage()
-		os.Exit(2)
+func NewFuseZipFs(zipFilePath, mountpoint string) *FuseZipFs {
+	p := &FuseZipFs{
+		ZipfilePath: zipFilePath,
+		MountPoint:  mountpoint,
+		Ready:       make(chan bool),
+		ReqStop:     make(chan bool),
+		Done:        make(chan bool),
 	}
-	path := flag.Arg(0)
-	mountpoint := flag.Arg(1)
-	if err := mount(path, mountpoint); err != nil {
-		log.Fatal(err)
-	}
+
+	return p
 }
 
-func mount(path, mountpoint string) error {
-	archive, err := zip.OpenReader(path)
+func (p *FuseZipFs) Stop() error {
+	p.mut.Lock()
+	defer p.mut.Unlock()
+	if p.stopped {
+		return nil
+	}
+	err := p.unmount()
+	if err != nil {
+		return err
+	}
+
+	p.stopped = true
+	<-p.Done
+
+	//  we don't do the following anymore since forcing the unmount
+	//  always results in 'bad file descriptor'.
+	// if p.serveErr != nil {
+	// return p.serveErr //  always 'bad file descriptor', so skip
+	// }
+
+	// check if the mount process has an error to report:
+	<-p.conn.Ready
+	p.connErr = p.conn.MountError
+	return p.connErr
+}
+
+func (p *FuseZipFs) Start() error {
+	archive, err := zip.OpenReader(p.ZipfilePath)
 	if err != nil {
 		return err
 	}
 	defer archive.Close()
 
-	c, err := fuse.Mount(mountpoint)
+	c, err := fuse.Mount(p.MountPoint)
 	if err != nil {
 		return err
 	}
+	p.conn = c
 	defer c.Close()
 
 	filesys := &FS{
 		archive: &archive.Reader,
 	}
-	if err := fs.Serve(c, filesys); err != nil {
-		return err
-	}
 
-	// check if the mount process has an error to report
-	<-c.Ready
-	if err := c.MountError; err != nil {
-		return err
+	go func() {
+		select {
+		case <-p.ReqStop:
+		case <-p.Done:
+		}
+		p.Stop() // be sure we cleanup
+	}()
+
+	go func() {
+		p.serveErr = fs.Serve(c, filesys)
+
+		// shutdown sequence: possibly requested, possibly an error.
+		close(p.Done)
+	}()
+
+	err = WaitUntilMounted(p.MountPoint)
+	if err != nil {
+		return fmt.Errorf("FuseZipFs.Start() error: could not detect mounted filesystem at mount point %s: '%s'", p.MountPoint, err)
 	}
 
 	return nil
@@ -223,4 +267,64 @@ func (fh *FileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fus
 	}
 	resp.Data = buf[:n]
 	return err
+}
+
+func WaitUntilMounted(mountPoint string) error {
+
+	mpBytes := []byte(mountPoint)
+	dur := 3 * time.Millisecond
+	tries := 40
+	var found bool
+	for i := 0; i < tries; i++ {
+		out, err := exec.Command(`/sbin/mount`).Output()
+		if err != nil {
+			return fmt.Errorf("could not query for mount points with /sbin/mount: '%s'", err)
+		}
+		VPrintf("\n out = '%s'\n", string(out))
+		found = bytes.Contains(out, mpBytes)
+		if found {
+			VPrintf("\n found mountPoint '%s' on try %d\n", mountPoint, i+1)
+			return nil
+		}
+		time.Sleep(dur)
+	}
+	return fmt.Errorf("WaitUntilMounted() error: could not locate mount point '%s' in /sbin/mount output, "+
+		"even after %d tries with %v sleep between.", mountPoint, tries, dur)
+}
+
+func (p *FuseZipFs) unmount() error {
+
+	err := exec.Command(`/sbin/umount`, p.MountPoint).Run()
+	if err != nil {
+		return fmt.Errorf("Unmount() error: could not /sbin/umount %s: '%s'", p.MountPoint, err)
+	}
+
+	err = WaitUntilUnmounted(p.MountPoint)
+	if err != nil {
+		return fmt.Errorf("Unmount() error: tried to wait for mount %s to become unmounted, but got error: '%s'", p.MountPoint, err)
+	}
+	return nil
+}
+
+func WaitUntilUnmounted(mountPoint string) error {
+
+	mpBytes := []byte(mountPoint)
+	dur := 3 * time.Millisecond
+	tries := 40
+	var found bool
+	for i := 0; i < tries; i++ {
+		out, err := exec.Command(`/sbin/mount`).Output()
+		if err != nil {
+			return fmt.Errorf("could not query for mount points with /sbin/mount: '%s'", err)
+		}
+		VPrintf("\n out = '%s'\n", string(out))
+		found = bytes.Contains(out, mpBytes)
+		if !found {
+			VPrintf("\n mountPoint '%s' was not in mount output on try %d\n", mountPoint, i+1)
+			return nil
+		}
+		time.Sleep(dur)
+	}
+	return fmt.Errorf("WaitUntilUnmounted() error: mount point '%s' in /sbin/mount was always present, "+
+		"even after %d waits with %v sleep between each.", mountPoint, tries, dur)
 }
