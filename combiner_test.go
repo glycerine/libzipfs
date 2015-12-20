@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"os/exec"
 	"testing"
 
@@ -19,7 +20,7 @@ func Test002CombinerAndSplitterAreInverses(t *testing.T) {
 	cv.Convey("out footer should report the proper sizes for the input exe and .zip files", t, func() {
 		testOutputPath, err := ioutil.TempFile("", "libzipfs.test.")
 		panicOn(err)
-		//defer os.Remove(testOutputPath.Name())
+		defer os.Remove(testOutputPath.Name())
 
 		var cfg CombinerConfig
 		cfg.OutputPath = testOutputPath.Name() // should resember "testfiles/expectedCombined" at the end.
@@ -30,7 +31,7 @@ func Test002CombinerAndSplitterAreInverses(t *testing.T) {
 		err = foot.FillHashes(&cfg)
 		panicOn(err)
 		footBuf := bytes.NewBuffer(foot.ToBytes())
-		fmt.Printf("footBuf = '%x'\n", footBuf)
+		VPrintf("footBuf = '%x'\n", footBuf)
 
 		cv.So(foot.ExecutableLengthBytes, cv.ShouldEqual, 2315808)
 		cv.So(foot.ZipfileLengthBytes, cv.ShouldEqual, 478)
@@ -38,9 +39,9 @@ func Test002CombinerAndSplitterAreInverses(t *testing.T) {
 
 		cv.So(len(footBuf.Bytes()), cv.ShouldEqual, LIBZIPFS_FOOTER_LEN)
 
-		fmt.Printf("exe checksum = '%x'\n", foot.ExecutableBlake2Checksum)
-		fmt.Printf("zip checksum = '%x'\n", foot.ZipfileBlake2Checksum)
-		fmt.Printf("foot checksum = '%x'\n", foot.FooterBlake2Checksum)
+		VPrintf("exe checksum = '%x'\n", foot.ExecutableBlake2Checksum)
+		VPrintf("zip checksum = '%x'\n", foot.ZipfileBlake2Checksum)
+		VPrintf("foot checksum = '%x'\n", foot.FooterBlake2Checksum)
 
 		cv.So(foot.MagicFooterNumber1[:len(MAGIC1)], cv.ShouldResemble, MAGIC1)
 		cv.So(foot.MagicFooterNumber2[:len(MAGIC2)], cv.ShouldResemble, MAGIC2)
@@ -65,19 +66,19 @@ func Test002CombinerAndSplitterAreInverses(t *testing.T) {
 
 		testSplitToExePath, err := ioutil.TempFile("", "libzipfs.test.")
 		panicOn(err)
-		//defer testSplitToExePath.Close()
-		//defer os.Remove(testSplitToExePath.Name())
+		defer testSplitToExePath.Close()
+		defer os.Remove(testSplitToExePath.Name())
 
 		testSplitToZipPath, err := ioutil.TempFile("", "libzipfs.test.")
 		panicOn(err)
-		//defer testSplitToZipPath.Close()
-		//defer os.Remove(testSplitToZipPath.Name())
+		defer testSplitToZipPath.Close()
+		defer os.Remove(testSplitToZipPath.Name())
 
 		splitCfg.ExecutablePath = testSplitToExePath.Name()
 		splitCfg.ZipfilePath = testSplitToZipPath.Name()
 		splitCfg.Split = true
 
-		fmt.Printf("splitCfg = %#v\n", splitCfg)
+		VPrintf("splitCfg = %#v\n", splitCfg)
 		recoveredFoot, err := DoSplitOutExeAndZip(&splitCfg)
 		panicOn(err)
 		cv.So(recoveredFoot, cv.ShouldResemble, &foot)

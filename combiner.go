@@ -99,11 +99,11 @@ func DoCombineExeAndZip(cfg *CombinerConfig) error {
 
 	xi, err := os.Stat(cfg.ExecutablePath)
 	panicOn(err)
-	fmt.Printf("xi = '%#v'", xi)
+	VPrintf("xi = '%#v'", xi)
 
 	zi, err := os.Stat(cfg.ZipfilePath)
 	panicOn(err)
-	fmt.Printf("zi = '%#v'", zi)
+	VPrintf("zi = '%#v'", zi)
 
 	// create the footer metadata
 	var foot Footer

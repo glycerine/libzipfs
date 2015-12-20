@@ -39,7 +39,7 @@ func (foot *Footer) FillHashes(cfg *CombinerConfig) error {
 	hash = foot.GetFooterChecksum()
 
 	copy(foot.FooterBlake2Checksum[:], hash)
-	fmt.Printf("debug: foot.FooterBlake2Checksum = '%x'\n", foot.FooterBlake2Checksum)
+	VPrintf("debug: foot.FooterBlake2Checksum = '%x'\n", foot.FooterBlake2Checksum)
 
 	return nil
 }
@@ -79,7 +79,7 @@ func Blake2HashFile(path string) (hash []byte, length int64, err error) {
 		return nil, 0, fmt.Errorf("Blake2HashFile() error during reading from file '%s': '%s'", path, err)
 	}
 	hash = h.Sum(nil)
-	fmt.Printf("hash = '%x' for file '%s'\n", hash, path)
+	VPrintf("hash = '%x' for file '%s'\n", hash, path)
 	return hash, length, nil
 }
 
@@ -90,7 +90,7 @@ func (f *Footer) ToBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("ToBytes() debug: wrote %#v to string of bytes '%x'\n", *f, string(buf.Bytes()))
+	VPrintf("ToBytes() debug: wrote %#v to string of bytes '%x'\n", *f, string(buf.Bytes()))
 	return buf.Bytes()
 }
 
@@ -101,7 +101,7 @@ func (f *Footer) FromBytes(by []byte) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("FromBytes() debug: read f = '%#v' from bytes '%x'\n", *f, string(by))
+	VPrintf("FromBytes() debug: read f = '%#v' from bytes '%x'\n", *f, string(by))
 }
 
 func compareBlake2(a, b []byte) (diffpos int, err error) {
