@@ -47,7 +47,7 @@ type CombinerConfig struct {
 func (c *CombinerConfig) DefineFlags(fs *flag.FlagSet) {
 	fs.StringVar(&c.ExecutablePath, "exe", "", "path to the executable file")
 	fs.StringVar(&c.ZipfilePath, "zip", "", "path to the zipfile to embed file")
-	fs.StringVar(&c.OutputPath, "o", "", "path to the output file to be written")
+	fs.StringVar(&c.OutputPath, "o", "", "path to the combined output file to be written (or split if -split given)")
 	fs.BoolVar(&c.Split, "split", false, "split the output file back apart (instead of combine which is the default)")
 }
 

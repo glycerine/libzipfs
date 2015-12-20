@@ -18,6 +18,10 @@ import (
 
 var progName string = path.Base(os.Args[0])
 
+func usage() {
+	fmt.Fprintf(os.Stderr, "")
+}
+
 func main() {
 
 	myflags := flag.NewFlagSet(progName, flag.ExitOnError)
@@ -27,11 +31,12 @@ func main() {
 	err := myflags.Parse(os.Args[1:])
 	err = cfg.ValidateConfig()
 	if err != nil {
+		myflags.PrintDefaults()
 		log.Fatalf("%s command line flag error: '%s'", progName, err)
 	}
 
 	if cfg.Split {
-		err = lzf.DoSplitOutExeAndZip(cfg)
+		_, err = lzf.DoSplitOutExeAndZip(cfg)
 	} else {
 		err = lzf.DoCombineExeAndZip(cfg)
 	}
