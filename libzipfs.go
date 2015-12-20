@@ -1,13 +1,14 @@
 package libzipfs
 
 import (
-	"archive/zip"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	zip "github.com/glycerine/libzipfs/ezip"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
