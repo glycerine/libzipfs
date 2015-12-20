@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var Verbose bool
+var Verbose bool = true
 
 func VPrintf(format string, a ...interface{}) {
 	if Verbose {

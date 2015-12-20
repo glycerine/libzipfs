@@ -39,11 +39,15 @@ func WaitUntilMounted(mountPoint string) error {
 		"even after %d tries with %v sleep between.", mountPoint, utilLoc.MountPath, tries, dur)
 }
 
+//
+// linux when regular user umount attempts:
+//  getting error: umount: /tmp/libzipfs694201669 is not in the fstab (and you are not root)
+//
 func (p *FuseZipFs) unmount() error {
 
-	err := exec.Command(utilLoc.UmountPath, p.MountPoint).Run()
+	out, err := exec.Command(utilLoc.UmountPath, p.MountPoint).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("Unmount() error: could not %s %s: '%s'", utilLoc.UmountPath, p.MountPoint, err)
+		return fmt.Errorf("Unmount() error: could not %s %s: '%s' / output: '%s'", utilLoc.UmountPath, p.MountPoint, err, string(out))
 	}
 
 	err = WaitUntilUnmounted(p.MountPoint)

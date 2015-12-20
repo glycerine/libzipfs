@@ -31,6 +31,9 @@ type FuseZipFs struct {
 	serveErr error
 	connErr  error
 	conn     *fuse.Conn
+
+	filesys *FS
+	archive *zip.ReadCloser
 }
 
 func NewFuseZipFs(zipFilePath, mountpoint string) *FuseZipFs {
@@ -59,6 +62,9 @@ func (p *FuseZipFs) Stop() error {
 	p.stopped = true
 	<-p.Done
 
+	p.archive.Close()
+	p.conn.Close()
+
 	//  we don't do the following anymore since forcing the unmount
 	//  always results in 'bad file descriptor'.
 	// if p.serveErr != nil {
@@ -72,21 +78,20 @@ func (p *FuseZipFs) Stop() error {
 }
 
 func (p *FuseZipFs) Start() error {
-	archive, err := zip.OpenReader(p.ZipfilePath)
+	var err error
+	p.archive, err = zip.OpenReader(p.ZipfilePath)
 	if err != nil {
 		return err
 	}
-	defer archive.Close()
 
 	c, err := fuse.Mount(p.MountPoint)
 	if err != nil {
 		return err
 	}
 	p.conn = c
-	defer c.Close()
 
-	filesys := &FS{
-		archive: &archive.Reader,
+	p.filesys = &FS{
+		archive: &p.archive.Reader,
 	}
 
 	go func() {
@@ -98,7 +103,7 @@ func (p *FuseZipFs) Start() error {
 	}()
 
 	go func() {
-		p.serveErr = fs.Serve(c, filesys)
+		p.serveErr = fs.Serve(c, p.filesys)
 
 		// shutdown sequence: possibly requested, possibly an error.
 		close(p.Done)

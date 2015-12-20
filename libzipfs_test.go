@@ -13,7 +13,7 @@ func TestWeCanMountInTheTmpDir(t *testing.T) {
 	cv.Convey("we should be able to mount a zipfile image in the tmp dir", t, func() {
 		dir := "/tmp" // "" => use system tmp dir
 		mountPoint, err := ioutil.TempDir(dir, "libzipfs")
-		//fmt.Printf("\n\n mountPoint = '%s'\n", mountPoint)
+		VPrintf("\n\n mountPoint = '%s'\n", mountPoint)
 		cv.So(err, cv.ShouldEqual, nil)
 
 		zipFile := "testfiles/hi.zip"
@@ -25,11 +25,14 @@ func TestWeCanMountInTheTmpDir(t *testing.T) {
 				"for file '%s' at mount point %s: '%s'", zipFile, mountPoint, err))
 		}
 
+		VPrintf("\n\n z.Start() succeeded, with mountPoint = '%s'\n", mountPoint)
+
 		err = z.Stop()
 		if err != nil {
 			panic(fmt.Sprintf("error: could not z.Stop() FuseZipFs for file '%s' at %s: '%s'", zipFile, mountPoint, err))
 		}
 
+		VPrintf("\n\n z.Stop() succeeded, with mountPoint = '%s'\n", mountPoint)
 	})
 
 }
