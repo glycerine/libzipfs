@@ -112,6 +112,7 @@ func (p *FuseZipFs) Start() error {
 	if err != nil {
 		return fmt.Errorf("FuseZipFs.Start() error: could not detect mounted filesystem at mount point %s: '%s'", p.MountPoint, err)
 	}
+	close(p.Ready)
 
 	return nil
 }
