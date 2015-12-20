@@ -36,12 +36,13 @@ func Test001WeCanMountInTheTmpDir(t *testing.T) {
 		ef, err := os.Open(expectedFile)
 		cv.So(err, cv.ShouldBeNil)
 		cv.So(ef, cv.ShouldNotBeNil)
-		ef.Close()
-		ef = nil
+		err = ef.Close()
+		cv.So(err, cv.ShouldBeNil)
+
 		by, err := ioutil.ReadFile(expectedFile)
 		cv.So(err, cv.ShouldBeNil)
 		cv.So(len(expectedFileContent), cv.ShouldEqual, len(by))
-		diff, err := compareByteSlices(expectedFileContent, by, min(len(expectedFileContent), len(by)))
+		diff, err := compareByteSlices(expectedFileContent, by, len(expectedFileContent))
 		cv.So(err, cv.ShouldBeNil)
 		cv.So(diff, cv.ShouldEqual, -1)
 
@@ -53,17 +54,4 @@ func Test001WeCanMountInTheTmpDir(t *testing.T) {
 		VPrintf("\n\n z.Stop() succeeded, with mountPoint = '%s'\n", mountPoint)
 	})
 
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
