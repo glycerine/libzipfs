@@ -66,12 +66,10 @@ func OpenReaderAt(name string, start int64, size int64) (*ReadCloser, error) {
 	r := new(ReadCloser)
 
 	var rat io.ReaderAt
-	if start > 0 || size > 0 {
-		rat = io.NewSectionReader(f, start, size)
-	} else {
-		rat = f
-		size = fi.Size()
+	if size <= 0 {
+		size = fi.Size() - start
 	}
+	rat = io.NewSectionReader(f, start, size)
 
 	if err := r.init(rat, size); err != nil {
 		f.Close()
@@ -93,6 +91,7 @@ func NewReader(r io.ReaderAt, size int64) (*Reader, error) {
 
 func (z *Reader) init(r io.ReaderAt, size int64) error {
 	end, err := readDirectoryEnd(r, size)
+	//fmt.Printf("dirEnd = '%#v'\n", end)
 	if err != nil {
 		return err
 	}
@@ -116,7 +115,7 @@ func (z *Reader) init(r io.ReaderAt, size int64) error {
 		f := &File{zip: z, zipr: r, zipsize: size}
 		err = readDirectoryHeader(f, buf)
 		if err == ErrFormat || err == io.ErrUnexpectedEOF {
-			fmt.Printf("\n err after readDirectoryHeader(): '%v'\n", err)
+			//fmt.Printf("\n err after readDirectoryHeader(): '%v'\n", err)
 			break
 		}
 		if err != nil {
@@ -269,13 +268,13 @@ func (f *File) findBodyOffset() (int64, error) {
 func readDirectoryHeader(f *File, r io.Reader) error {
 	var buf [directoryHeaderLen]byte
 	if _, err := io.ReadFull(r, buf[:]); err != nil {
-		fmt.Printf("\n err after io.ReadFull(): '%v'\n", err)
+		//fmt.Printf("\n err after io.ReadFull(): '%v'\n", err)
 		return err
 	}
 	b := readBuf(buf[:])
 	if sig := b.uint32(); sig != directoryHeaderSignature {
-		fmt.Printf("\n err after sig != directoryHeaderSignature. sig='%#v'  direcotryHeaderSignature='%x'. buf = '%s'/'%x'\n",
-			sig, directoryHeaderSignature, string(buf[:]), buf[:])
+		//fmt.Printf("\n err after sig != directoryHeaderSignature. sig='%#v'  direcotryHeaderSignature='%x'. buf = '%s'/'%x'\n",
+		//	sig, directoryHeaderSignature, string(buf[:]), buf[:])
 		return ErrFormat
 	}
 	f.CreatorVersion = b.uint16()

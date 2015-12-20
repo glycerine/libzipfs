@@ -97,9 +97,7 @@ func (p *FuseZipFs) Start() error {
 		}
 	}
 
-	// io.NewSectionReader( p.)
-
-	p.archive, err = zip.OpenReader(p.ZipfilePath)
+	p.archive, err = zip.OpenReaderAt(p.ZipfilePath, p.offset, p.bytesAvail)
 	if err != nil {
 		return err
 	}
