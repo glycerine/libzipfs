@@ -50,12 +50,25 @@ func (p *FuseZipFs) unmount() error {
 		args = []string{"-u", p.MountPoint}
 	}
 
-	out, err := exec.Command(utilLoc.UmountPath, args...).CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("Unmount() error: could not %s %s: '%s' / output: '%s'", utilLoc.UmountPath, p.MountPoint, err, string(out))
+	// exactly two attemps seems to be exactly what is needed
+	pasted := strings.Join(args, " ")
+	sleepDur := 20 * time.Millisecond
+	tries := 2
+	k := 0
+	for {
+		out, err := exec.Command(utilLoc.UmountPath, args...).CombinedOutput()
+		if err != nil {
+			VPrintf("\n *** Unmount() error: could not %s %s: '%s' / output: '%s'. That was attempt %d.\n", utilLoc.UmountPath, pasted, err, string(out), k+1)
+			k++
+			if k >= tries {
+				// generally we'll have been successful on the 2nd try even though the error still shows up.
+				break
+			}
+			time.Sleep(sleepDur)
+		}
 	}
 
-	err = WaitUntilUnmounted(p.MountPoint)
+	err := WaitUntilUnmounted(p.MountPoint)
 	if err != nil {
 		return fmt.Errorf("Unmount() error: tried to wait for mount %s to become unmounted, but got error: '%s'", p.MountPoint, err)
 	}
