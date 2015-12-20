@@ -100,17 +100,23 @@ func (c *CombinerConfig) ValidateConfig() error {
 func DoCombineExeAndZip(cfg *CombinerConfig) error {
 
 	xi, err := os.Stat(cfg.ExecutablePath)
-	panicOn(err)
+	if err != nil {
+		return fmt.Errorf("DoCombinedExeAndZip() error: could not stat exe path '%s': '%s'", cfg.ExecutablePath, err)
+	}
 	VPrintf("xi = '%#v'", xi)
 
 	zi, err := os.Stat(cfg.ZipfilePath)
-	panicOn(err)
+	if err != nil {
+		return fmt.Errorf("DoCombinedExeAndZip() error: could not stat zipfile path '%s': '%s'", cfg.ZipfilePath, err)
+	}
 	VPrintf("zi = '%#v'", zi)
 
 	// create the footer metadata
 	var foot Footer
 	err = foot.FillHashes(cfg)
-	panicOn(err)
+	if err != nil {
+		return fmt.Errorf("DoCombinedExeAndZip() error in FillHashes() for cfg '%#v': '%s'", cfg, err)
+	}
 	footBuf := bytes.NewBuffer(foot.ToBytes())
 
 	// sanity check against the stat info

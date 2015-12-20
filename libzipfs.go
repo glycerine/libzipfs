@@ -34,15 +34,20 @@ type FuseZipFs struct {
 
 	filesys *FS
 	archive *zip.ReadCloser
+
+	offset     int64
+	bytesAvail int64 // -1 => unknown
 }
 
-func NewFuseZipFs(zipFilePath, mountpoint string, byteOffsetToZipFileStart int64) *FuseZipFs {
+func NewFuseZipFs(zipFilePath, mountpoint string, byteOffsetToZipFileStart int64, bytesAvail int64) *FuseZipFs {
 	p := &FuseZipFs{
 		ZipfilePath: zipFilePath,
 		MountPoint:  mountpoint,
 		Ready:       make(chan bool),
 		ReqStop:     make(chan bool),
 		Done:        make(chan bool),
+		offset:      byteOffsetToZipFileStart,
+		bytesAvail:  bytesAvail,
 	}
 
 	return p
@@ -79,6 +84,20 @@ func (p *FuseZipFs) Stop() error {
 
 func (p *FuseZipFs) Start() error {
 	var err error
+
+	if p.bytesAvail < 0 {
+		statinfo, err := os.Stat(p.ZipfilePath)
+		if err != nil {
+			return err
+		}
+		p.bytesAvail = statinfo.Size()
+		if p.bytesAvail <= 0 {
+			return fmt.Errorf("FuseZipFs.Start() error: zero bytes available to read from ZipfilePath '%s'", p.ZipfilePath)
+		}
+	}
+
+	// io.NewSectionReader( p.)
+
 	p.archive, err = zip.OpenReader(p.ZipfilePath)
 	if err != nil {
 		return err

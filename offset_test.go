@@ -10,22 +10,29 @@ import (
 	cv "github.com/glycerine/goconvey/convey"
 )
 
-func Test001WeCanMountInTheTmpDir(t *testing.T) {
+func Test004WeCanMountAnOffsetZipFile(t *testing.T) {
 
-	cv.Convey("we should be able to mount a zipfile image in the tmp dir", t, func() {
+	cv.Convey("we should be able to mount a zipfile image from the second half of a file, i.e. given an offset into the file, mount from the middle of the file should work", t, func() {
 		dir := "/tmp" // => /tmp easier to debug/shorter to type.
 		// dir := "" // => use system tmp dir
 		mountPoint, err := ioutil.TempDir(dir, "libzipfs")
 		VPrintf("\n\n mountPoint = '%s'\n", mountPoint)
 		cv.So(err, cv.ShouldEqual, nil)
 
-		zipFile := "testfiles/hi.zip"
-		z := NewFuseZipFs(zipFile, mountPoint, 0, -1)
+		comboFile := "testfiles/expectedCombined"
+
+		_, foot, comb, err := ReadFooter(comboFile)
+		panicOn(err)
+		defer comb.Close()
+		byteOffsetToZipFileStart := foot.ExecutableLengthBytes
+
+		z := NewFuseZipFs(comboFile, mountPoint, byteOffsetToZipFileStart, foot.ZipfileLengthBytes)
 
 		err = z.Start()
 		if err != nil {
 			panic(fmt.Sprintf("error during starting FuseZipFs "+
-				"for file '%s' at mount point %s: '%s'", zipFile, mountPoint, err))
+				"for file '%s' (at offset %d) at mount point %s: '%s'",
+				comboFile, byteOffsetToZipFileStart, mountPoint, err))
 		}
 
 		VPrintf("\n\n z.Start() succeeded, with mountPoint = '%s'\n", mountPoint)
@@ -48,7 +55,7 @@ func Test001WeCanMountInTheTmpDir(t *testing.T) {
 
 		err = z.Stop()
 		if err != nil {
-			panic(fmt.Sprintf("error: could not z.Stop() FuseZipFs for file '%s' at %s: '%s'", zipFile, mountPoint, err))
+			panic(fmt.Sprintf("error: could not z.Stop() FuseZipFs for file '%s' at %s: '%s'", comboFile, mountPoint, err))
 		}
 
 		VPrintf("\n\n z.Stop() succeeded, with mountPoint = '%s'\n", mountPoint)
