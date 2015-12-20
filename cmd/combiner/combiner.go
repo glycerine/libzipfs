@@ -91,30 +91,42 @@ func main() {
 	}
 
 	xi, err := os.Stat(cfg.ExecutablePath)
-	exitOn(err)
+	panicOn(err)
 	fmt.Printf("xi = '%#v'", xi)
+
+	zi, err := os.Stat(cfg.ZipfilePath)
+	panicOn(err)
+	fmt.Printf("zi = '%#v'", zi)
 
 	// create the footer metadata
 	var foot Footer
 	err = foot.FillHashes(cfg)
-	exitOn(err)
+	panicOn(err)
 	footBuf := bytes.NewBuffer(foot.ToBytes())
+
+	// sanity check against the stat info
+	if xi.Size() != foot.ExecutableLengthBytes {
+		panic(fmt.Errorf("%d == xi.Size() != foot.ExecutableLengthBytes == %d", xi.Size(), foot.ExecutableLengthBytes))
+	}
+	if zi.Size() != foot.ZipfileLengthBytes {
+		panic(fmt.Errorf("%d == zi.Size() != foot.ZipfileLengthBytes == %d", zi.Size(), foot.ZipfileLengthBytes))
+	}
 
 	// create the output file, o
 	o, err := os.Create(cfg.OutputPath)
-	exitOn(err)
+	panicOn(err)
 	defer o.Close()
 
 	// write to the output file from exe, zip, then footer:
 
 	// open exe
 	exeFd, err := os.Open(cfg.ExecutablePath)
-	exitOn(err)
+	panicOn(err)
 	defer exeFd.Close()
 
 	// open zip
 	zipFd, err := os.Open(cfg.ZipfilePath)
-	exitOn(err)
+	panicOn(err)
 	defer zipFd.Close()
 
 	// copy exe to o
@@ -138,6 +150,10 @@ func main() {
 		panic("wrong footSz!")
 	}
 
+	o.Close()
+	var executable = os.FileMode(0755)
+	err = os.Chmod(cfg.OutputPath, executable)
+	panicOn(err)
 }
 
 var MAGIC1 = []byte("\nLibZipFs00\n")
@@ -165,6 +181,8 @@ func panicOn(err error) {
 }
 
 func exitOn(err error) {
-	fmt.Fprintf(os.Stderr, "%s\n", err)
-	os.Exit(1)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "fatal error: '%s'\n", err)
+		os.Exit(1)
+	}
 }

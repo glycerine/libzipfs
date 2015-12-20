@@ -63,7 +63,7 @@ func (f *Footer) Blake2HashFile(path string) (hash []byte, length int64, err err
 		return nil, 0, fmt.Errorf("Blake2HashFile() error during reading from file '%s': '%s'", path, err)
 	}
 	hash = h.Sum(nil)
-	fmt.Printf("hash = '%s' for file '%s'\n", hash, path)
+	fmt.Printf("hash = '%x' for file '%s'\n", hash, path)
 	return hash, length, nil
 }
 
@@ -74,7 +74,7 @@ func (f *Footer) ToBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(buf.Bytes())
+	fmt.Printf("ToBytes() debug: wrote %#v to string of bytes '%x'\n", *f, string(buf.Bytes()))
 	return buf.Bytes()
 }
 
@@ -85,5 +85,5 @@ func (f *Footer) FromBytes(by []byte) {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("f = '%#v'\n", *f)
+	fmt.Printf("FromBytes() debug: read f = '%#v' from bytes '%x'\n", *f, string(by))
 }
