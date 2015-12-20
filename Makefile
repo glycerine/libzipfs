@@ -1,4 +1,5 @@
 all:
-	cd cmd/combiner && go install && go build
+	cd cmd/libzipfs-combiner && go install
+
 
 

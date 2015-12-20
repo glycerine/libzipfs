@@ -13,8 +13,8 @@ import (
 func Test004WeCanMountAnOffsetZipFile(t *testing.T) {
 
 	cv.Convey("we should be able to mount a zipfile image from the second half of a file, i.e. given an offset into the file, mount from the middle of the file should work", t, func() {
-		dir := "/tmp" // => /tmp easier to debug/shorter to type.
-		// dir := "" // => use system tmp dir
+		//dir := "/tmp" // => /tmp easier to debug/shorter to type.
+		dir := "" // => use system tmp dir
 		mountPoint, err := ioutil.TempDir(dir, "libzipfs")
 		VPrintf("\n\n mountPoint = '%s'\n", mountPoint)
 		cv.So(err, cv.ShouldEqual, nil)
@@ -63,8 +63,8 @@ func Test004WeCanMountAnOffsetZipFile(t *testing.T) {
 func Test004bWeCanMountARegularZipFile(t *testing.T) {
 
 	cv.Convey("exact same test as 004 but with a regular zipfile (no padding before it) for diagnostics/comparison: testfiles/hi.zip", t, func() {
-		dir := "/tmp" // => /tmp easier to debug/shorter to type.
-		// dir := "" // => use system tmp dir
+		//dir := "/tmp" // => /tmp easier to debug/shorter to type.
+		dir := "" // => use system tmp dir
 		mountPoint, err := ioutil.TempDir(dir, "libzipfs")
 		VPrintf("\n\n mountPoint = '%s'\n", mountPoint)
 		cv.So(err, cv.ShouldEqual, nil)
@@ -113,8 +113,8 @@ func Test004bWeCanMountARegularZipFile(t *testing.T) {
 func Test006WeCanMountAnOffsetComboFile(t *testing.T) {
 
 	cv.Convey("we should be able to mount an offset zipfile from the second half of a combo file, i.e. given an offset into the file, mount from the middle of the file should work", t, func() {
-		dir := "/tmp" // => /tmp easier to debug/shorter to type.
-		// dir := "" // => use system tmp dir
+		//dir := "/tmp" // => /tmp easier to debug/shorter to type.
+		dir := "" // => use system tmp dir
 		mountPoint, err := ioutil.TempDir(dir, "libzipfs")
 		VPrintf("\n\n mountPoint = '%s'\n", mountPoint)
 		cv.So(err, cv.ShouldEqual, nil)

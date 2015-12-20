@@ -13,8 +13,8 @@ import (
 func Test001WeCanMountInTheTmpDir(t *testing.T) {
 
 	cv.Convey("we should be able to mount a zipfile image in the tmp dir", t, func() {
-		dir := "/tmp" // => /tmp easier to debug/shorter to type.
-		// dir := "" // => use system tmp dir
+		//dir := "/tmp" // => /tmp easier to debug/shorter to type.
+		dir := "" // => use system tmp dir
 		mountPoint, err := ioutil.TempDir(dir, "libzipfs")
 		VPrintf("\n\n mountPoint = '%s'\n", mountPoint)
 		cv.So(err, cv.ShouldEqual, nil)
