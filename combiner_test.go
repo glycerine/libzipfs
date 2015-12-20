@@ -34,7 +34,9 @@ func Test002CombinerAndSplitterAreInverses(t *testing.T) {
 
 		cv.So(foot.ExecutableLengthBytes, cv.ShouldEqual, 2315808)
 		cv.So(foot.ZipfileLengthBytes, cv.ShouldEqual, 478)
-		cv.So(foot.FooterLengthBytes, cv.ShouldEqual, 256)
+		cv.So(foot.FooterLengthBytes, cv.ShouldEqual, LIBZIPFS_FOOTER_LEN)
+
+		cv.So(len(footBuf.Bytes()), cv.ShouldEqual, LIBZIPFS_FOOTER_LEN)
 
 		fmt.Printf("exe checksum = '%x'\n", foot.ExecutableBlake2Checksum)
 		fmt.Printf("zip checksum = '%x'\n", foot.ZipfileBlake2Checksum)

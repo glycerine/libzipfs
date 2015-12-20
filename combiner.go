@@ -17,6 +17,8 @@ import (
 var MAGIC1 = []byte("\nLibZipFs00\n")
 var MAGIC2 = []byte("\nLibZipFsEnd\n")
 
+const LIBZIPFS_FOOTER_LEN = 256
+
 type Footer struct {
 	Reserved1          int64
 	MagicFooterNumber1 [16]byte
