@@ -19,6 +19,8 @@ var MAGIC2 = []byte("\nLibZipFsEnd\n")
 
 const LIBZIPFS_FOOTER_LEN = 256
 
+type FooterArray [LIBZIPFS_FOOTER_LEN]byte
+
 type Footer struct {
 	Reserved1          int64
 	MagicFooterNumber1 [16]byte
@@ -90,10 +92,6 @@ func (c *CombinerConfig) ValidateConfig() error {
 		}
 	}
 
-	return nil
-}
-
-func DoSplitOutExeAndZip(cfg *CombinerConfig) error {
 	return nil
 }
 
@@ -178,4 +176,26 @@ func exitOn(err error) {
 		fmt.Fprintf(os.Stderr, "fatal error: '%s'\n", err)
 		os.Exit(1)
 	}
+}
+
+func (foot *Footer) VerifyExeZipChecksums(cfg *CombinerConfig) (err error) {
+
+	hash, _, err := Blake2HashFile(cfg.ExecutablePath)
+	if err != nil {
+		return err
+	}
+	_, err = compareBlake2(foot.ExecutableBlake2Checksum[:], hash)
+	if err != nil {
+		return fmt.Errorf("executable checksum mismatch: '%s'", err)
+	}
+
+	hash, _, err = Blake2HashFile(cfg.ZipfilePath)
+	if err != nil {
+		return err
+	}
+	_, err = compareBlake2(foot.ZipfileBlake2Checksum[:], hash)
+	if err != nil {
+		return fmt.Errorf("zipfile checksum mismatch: '%s'", err)
+	}
+	return nil
 }

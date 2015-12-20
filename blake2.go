@@ -19,14 +19,14 @@ func (foot *Footer) FillHashes(cfg *CombinerConfig) error {
 	var sz int64
 	var err error
 
-	hash, sz, err = foot.Blake2HashFile(cfg.ExecutablePath)
+	hash, sz, err = Blake2HashFile(cfg.ExecutablePath)
 	if err != nil {
 		return err
 	}
 	copy(foot.ExecutableBlake2Checksum[:], hash)
 	foot.ExecutableLengthBytes = sz
 
-	hash, sz, err = foot.Blake2HashFile(cfg.ZipfilePath)
+	hash, sz, err = Blake2HashFile(cfg.ZipfilePath)
 	if err != nil {
 		return err
 	}
@@ -36,12 +36,7 @@ func (foot *Footer) FillHashes(cfg *CombinerConfig) error {
 	// fill FooterChecksum
 	foot.FooterLengthBytes = 256
 
-	ser := foot.ToBytes()
-	fmt.Printf("ser = '%x'\n", ser)
-
-	h := blake2.New(nil)
-	h.Write(ser)
-	hash = h.Sum(nil)
+	hash = foot.GetFooterChecksum()
 
 	copy(foot.FooterBlake2Checksum[:], hash)
 	fmt.Printf("debug: foot.FooterBlake2Checksum = '%x'\n", foot.FooterBlake2Checksum)
@@ -49,7 +44,25 @@ func (foot *Footer) FillHashes(cfg *CombinerConfig) error {
 	return nil
 }
 
-func (f *Footer) Blake2HashFile(path string) (hash []byte, length int64, err error) {
+func (foot *Footer) GetFooterChecksum() []byte {
+	// preserve any checksum, so we can zero it for the hashing
+	var footerCheck [64]byte
+	copy(footerCheck[:], foot.FooterBlake2Checksum[:])
+
+	for i := 0; i < 64; i++ {
+		foot.FooterBlake2Checksum[i] = 0
+	}
+
+	h := blake2.New(nil)
+	h.Write(foot.ToBytes())
+
+	// restore any checksum already there
+	copy(foot.FooterBlake2Checksum[:], footerCheck[:])
+
+	return []byte(h.Sum(nil))
+}
+
+func Blake2HashFile(path string) (hash []byte, length int64, err error) {
 	if !FileExists(path) {
 		return nil, 0, fmt.Errorf("no such file: '%s'", path)
 	}
@@ -89,4 +102,13 @@ func (f *Footer) FromBytes(by []byte) {
 		panic(err)
 	}
 	fmt.Printf("FromBytes() debug: read f = '%#v' from bytes '%x'\n", *f, string(by))
+}
+
+func compareBlake2(a, b []byte) (diffpos int, err error) {
+	for i := 0; i < 64; i++ {
+		if a[i] != b[i] {
+			return i, fmt.Errorf("blake2 checksums differ as position %d", i)
+		}
+	}
+	return -1, nil
 }
