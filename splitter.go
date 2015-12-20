@@ -12,6 +12,52 @@ import (
 	"os"
 )
 
+// client take responsibility for closing combFd when done with it; it is the open
+// file handled (if err == nil) for reading from the file at combinedPath.
+func ReadFooter(combinedPath string) (offset int64, ft *Footer, comb *os.File, err error) {
+
+	// read last 256 bytes of combined file and extract the footer
+	// cfg.OutputPath is our input now.
+	combi, err := os.Stat(combinedPath)
+	if err != nil {
+		return -1, nil, nil, fmt.Errorf("could not stat path '%s'", combinedPath, err)
+	}
+	VPrintf("\n combi = '%#v'\n", combi)
+
+	if combi.Size() < LIBZIPFS_FOOTER_LEN {
+		return -1, nil, nil, fmt.Errorf("path to split '%s' smaller (bytes=%d) than "+
+			"footer(bytes=%d), cannot be a combiner output file",
+			combinedPath, combi.Size(), LIBZIPFS_FOOTER_LEN)
+	}
+
+	comb, err = os.Open(combinedPath)
+	if err != nil {
+		return -1, nil, nil, fmt.Errorf("could not open path '%s'", combinedPath, err)
+	}
+
+	footerStartOffset, err := comb.Seek(-LIBZIPFS_FOOTER_LEN, 2)
+	if err != nil {
+		return -1, nil, nil, fmt.Errorf("could not seek to footer position inside file '%s'", combinedPath, err)
+	}
+	VPrintf("footerStartOffset = %d\n", footerStartOffset)
+
+	by := make([]byte, LIBZIPFS_FOOTER_LEN)
+	n, err := comb.Read(by)
+	if err != io.EOF && err != nil {
+		return -1, nil, nil, fmt.Errorf("could not read at footer position inside file '%s'", combinedPath, err)
+	}
+	if n != LIBZIPFS_FOOTER_LEN {
+		return -1, nil, nil, fmt.Errorf("could not read the full footer length from file '%s' starting at offset %d: %d == bytes_read_in != LIBZIPFS_FOOTER_LEN == %d", combinedPath, footerStartOffset, n, LIBZIPFS_FOOTER_LEN)
+	}
+
+	// must return err if foot is bad
+	foot, err := ReifyFooterAndDoInexpensiveChecks(by[:], combinedPath, footerStartOffset)
+	if err != nil {
+		return -1, nil, nil, err
+	}
+	return footerStartOffset, foot, comb, err
+}
+
 func DoSplitOutExeAndZip(cfg *CombinerConfig) (*Footer, error) {
 
 	if cfg.Split != true {
@@ -19,39 +65,8 @@ func DoSplitOutExeAndZip(cfg *CombinerConfig) (*Footer, error) {
 			"must be set to true for splitting call. cfg = '%#v'", cfg)
 	}
 
-	// read last 256 bytes of combined file and extract the footer
-	// cfg.OutputPath is our input now.
-	combi, err := os.Stat(cfg.OutputPath)
-	panicOn(err)
-	VPrintf("\n combi = '%#v'\n", combi)
-
-	if combi.Size() < LIBZIPFS_FOOTER_LEN {
-		return nil, fmt.Errorf("path to split '%s' smaller (bytes=%d) than "+
-			"footer(bytes=%d), cannot be a combiner output file",
-			cfg.OutputPath, combi.Size(), LIBZIPFS_FOOTER_LEN)
-	}
-
-	comb, err := os.Open(cfg.OutputPath)
-	panicOn(err)
-
-	footerStartOffset, err := comb.Seek(-LIBZIPFS_FOOTER_LEN, 2)
-	panicOn(err)
-	VPrintf("footerStartOffset = %d\n", footerStartOffset)
-
-	by := make([]byte, LIBZIPFS_FOOTER_LEN)
-	n, err := comb.Read(by)
-	if err != io.EOF && err != nil {
-		panicOn(err)
-	}
-	if n != LIBZIPFS_FOOTER_LEN {
-		return nil, fmt.Errorf("%d == n != LIBZIPFS_FOOTER_LEN == %d", n, LIBZIPFS_FOOTER_LEN)
-	}
-
-	// must return err if foot is bad
-	foot, err := ReifyFooterAndDoInexpensiveChecks(by[:], cfg, footerStartOffset)
-	if err != nil {
-		return nil, err
-	}
+	_, foot, comb, err := ReadFooter(cfg.OutputPath)
+	defer comb.Close()
 
 	// create the split out exe and zip files
 	exeFd, err := os.Create(cfg.ExecutablePath)
@@ -82,7 +97,7 @@ func DoSplitOutExeAndZip(cfg *CombinerConfig) (*Footer, error) {
 }
 
 // must return err if foot is bad
-func ReifyFooterAndDoInexpensiveChecks(by []byte, cfg *CombinerConfig, footerStartOffset int64) (*Footer, error) {
+func ReifyFooterAndDoInexpensiveChecks(by []byte, combinedPath string, footerStartOffset int64) (*Footer, error) {
 	var err error
 	var foot Footer
 	foot.FromBytes(by[:])
@@ -102,7 +117,7 @@ func ReifyFooterAndDoInexpensiveChecks(by []byte, cfg *CombinerConfig, footerSta
 	chk := foot.GetFooterChecksum()
 	for i := 0; i < 64; i++ {
 		if chk[i] != foot.FooterBlake2Checksum[i] {
-			return nil, fmt.Errorf("DoSplitOutexeAndZip() error: reified footer from file '%s' does not have the expected checksum, file corrupt or not a combined file?  at i=%d, disk position footerStartOffset=%d, computed footer checksum='%x', versus read-from-disk footer checksum = '%x'", cfg.OutputPath, i, footerStartOffset, chk, foot.FooterBlake2Checksum)
+			return nil, fmt.Errorf("DoSplitOutexeAndZip() error: reified footer from file '%s' does not have the expected checksum, file corrupt or not a combined file?  at i=%d, disk position footerStartOffset=%d, computed footer checksum='%x', versus read-from-disk footer checksum = '%x'", combinedPath, i, footerStartOffset, chk, foot.FooterBlake2Checksum)
 		}
 	}
 

@@ -54,7 +54,7 @@ func Test003SplitterDetectsCorruptFooters(t *testing.T) {
 
 		footerStartOffset := recoveredFoot.ZipfileLengthBytes + recoveredFoot.ExecutableLengthBytes
 		uncorruptBytes := recoveredFoot.ToBytes()
-		_, err = ReifyFooterAndDoInexpensiveChecks(uncorruptBytes, &splitCfg, footerStartOffset)
+		_, err = ReifyFooterAndDoInexpensiveChecks(uncorruptBytes, splitCfg.OutputPath, footerStartOffset)
 		cv.Convey("uncorrupt recoveredFoot should not raise an error, part 2", func() {
 			cv.So(err, cv.ShouldBeNil)
 		})
@@ -64,12 +64,12 @@ func Test003SplitterDetectsCorruptFooters(t *testing.T) {
 			for i := range corruptBytes {
 				// corrupt up
 				corruptBytes[i]++
-				_, err = ReifyFooterAndDoInexpensiveChecks(corruptBytes, &splitCfg, footerStartOffset)
+				_, err = ReifyFooterAndDoInexpensiveChecks(corruptBytes, splitCfg.OutputPath, footerStartOffset)
 				cv.So(err, cv.ShouldNotBeNil)
 				corruptBytes[i] = uncorruptBytes[i]
 				// or corrupt down
 				corruptBytes[i]--
-				_, err = ReifyFooterAndDoInexpensiveChecks(corruptBytes, &splitCfg, footerStartOffset)
+				_, err = ReifyFooterAndDoInexpensiveChecks(corruptBytes, splitCfg.OutputPath, footerStartOffset)
 				cv.So(err, cv.ShouldNotBeNil)
 				corruptBytes[i] = uncorruptBytes[i]
 			}

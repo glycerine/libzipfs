@@ -20,7 +20,7 @@ func Test001WeCanMountInTheTmpDir(t *testing.T) {
 		cv.So(err, cv.ShouldEqual, nil)
 
 		zipFile := "testfiles/hi.zip"
-		z := NewFuseZipFs(zipFile, mountPoint)
+		z := NewFuseZipFs(zipFile, mountPoint, 0)
 
 		err = z.Start()
 		if err != nil {

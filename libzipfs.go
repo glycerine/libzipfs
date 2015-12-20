@@ -36,7 +36,7 @@ type FuseZipFs struct {
 	archive *zip.ReadCloser
 }
 
-func NewFuseZipFs(zipFilePath, mountpoint string) *FuseZipFs {
+func NewFuseZipFs(zipFilePath, mountpoint string, byteOffsetToZipFileStart int64) *FuseZipFs {
 	p := &FuseZipFs{
 		ZipfilePath: zipFilePath,
 		MountPoint:  mountpoint,
