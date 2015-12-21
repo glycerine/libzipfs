@@ -40,7 +40,7 @@ via a fuse mountpoint.
 ## status
 
 Excellent. Works well and is very useful. I only use it on OSX and Linux. On OSX
-you need to have [OSX Fuse](https://osxfuse.github.io/) installed first.
+you need to have [OSX Fuse](https://osxfuse.github.io/) installed first.  On Linux you'll need to either `sudo yum install fuse` or `sudo apt-get install fuse-utils` to obtain the `/bin/fusermount` utility.
 
 ## origins
 
