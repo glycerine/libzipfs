@@ -47,8 +47,8 @@ func (c *MntzipConfig) ValidateConfig() error {
 func main() {
 
 	// grab ctrl-c
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt)
+	ctrl_C_chan := make(chan os.Signal, 1)
+	signal.Notify(ctrl_C_chan, os.Interrupt)
 
 	// process command line args
 	myflags := flag.NewFlagSet(progName, flag.ExitOnError)
@@ -72,11 +72,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("%s error calling z.Start() to start serving fuse requests: '%s'", progName, err)
 	}
-	defer z.Stop() // stop serving files and unmount
+	defer z.Stop() // stop serving files and unmount at end
 
 	fmt.Printf("\nZip file '%s' mounted at directory '%s'. [press ctrl-c to exit and unmount]\n",
 		cfg.ZipfilePath, cfg.MountPath)
 
-	<-signalChan
-	// the defer z.Stop() takes care of the unmount
+	select {
+	case <-ctrl_C_chan:
+	case <-z.Done:
+		// can happen if someone force unmounts the mount from under us.
+	}
 }
