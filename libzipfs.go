@@ -114,10 +114,10 @@ func (p *FuseZipFs) Stop() error {
 	}
 	err := p.unmount()
 	if err != nil {
-		fmt.Printf("unmount() of p.MountPoint='%s' failed with error: '%s'\n", p.MountPoint, err)
+		VPrintf("unmount() of p.MountPoint='%s' failed with error: '%s'\n", p.MountPoint, err)
 		return err
 	}
-	fmt.Printf("unmount() of p.MountPoint='%s' succeeded.\n", p.MountPoint)
+	VPrintf("unmount() of p.MountPoint='%s' succeeded.\n", p.MountPoint)
 	p.stopped = true
 	<-p.Done
 
