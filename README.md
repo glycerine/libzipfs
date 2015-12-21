@@ -78,8 +78,8 @@ and a zipfile. The structure of the combined file looks like this:
 byte 0                                           byte N
 ~~~
 
-The embedded zip file will be access and served via a fuse mountpoint.
-The executable will contain code to accomplish this. The 256-bite
+The embedded zip file can then be made available via a fuse mountpoint.
+The Go executable will contain Go code to accomplish this. The 256-bite
 footer at the end of the file describes the location of the
 embedded zip file. The combined file is still an executable,
 and can be run directly.
