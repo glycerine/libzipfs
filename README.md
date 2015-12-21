@@ -77,6 +77,19 @@ $ libzipfs-combiner --exe my.go.binary -o my.go.binary.combo -zip hi.zip
 
 type `make demo` and see testfiles/api.go for a full demo:
 
+Our demo zip file `testfiles/hi.zip` is a simple zip file with one file `hello` that resides inside two nested directories:
+
+~~~
+$ unzip -Z -z ./hi.zip
+Archive:  ./hi.zip   478 bytes   3 files
+drwxr-xr-x  3.0 unx        0 bx stor 19-Dec-15 17:27 dirA/
+drwxr-xr-x  3.0 unx        0 bx stor 19-Dec-15 17:27 dirA/dirB/
+-rw-r--r--  3.0 unx       12 tx stor 19-Dec-15 17:27 dirA/dirB/hello
+3 files, 12 bytes uncompressed, 12 bytes compressed:  0.0%
+~~~
+
+the go code:
+
 ~~~
 package main
 
