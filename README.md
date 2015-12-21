@@ -8,22 +8,23 @@ standalone one-binary deployment. Embeds a zipfile inside your executable.
 
 1. You have a bunch of images/scripts/files to be served from a webserving application,
    and you want to bundle those resources alongside your Go webapp. libzipfs lets
-   you easily create a single executable that contains all you resources in one
+   you easily create a single executable that contains all your resources in one
    place.
 
 1. If you are using CGO to call C code, and that C code expects to be able to
    read files from somewhere on the filesystem, you can package up all those
-   files and still mount them in a fuse-based filesystem mountpoint where
-   the C code can find and use them. For example, by https://github.com/glycerine/rmq
-   project embeds R inside a Go binary, and libzipfs allows R libraries
-   to be easily shipped with the binary.
+   files, ship them with the executable, and they can be read from the
+   fuse mountpoint -- where the C code can find and use them. For example,
+   my https://github.com/glycerine/rmq project embeds R inside a Go binary,
+   and libzipfs allows R libraries to be easily shipped all together in a
+   single binary.
 
 
 ## origins
 
 This library is dervied from Tommi Virtanen's work https://github.com/bazil/zipfs,
 which is fantastic and provides a fuse-mounted read-only filesystem from a zipfile.
-zipfs and https://github.com/bazil/fuse are doing the heavy lifting 
+The zipfs library and https://github.com/bazil/fuse are doing the heavy lifting 
 behind the scenes.
 
 The project was inspired by https://github.com/bazil/zipfs and https://github.com/shurcooL/vfsgen
