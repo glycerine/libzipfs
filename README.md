@@ -19,6 +19,10 @@ standalone one-binary deployment. Embeds a zipfile inside your executable.
    and libzipfs allows R libraries to be easily shipped all together in a
    single binary.
 
+## status
+
+Excellent. Works well and is very useful. I only use it on OSX and Linux. On OSX
+you need to have [OSX Fuse](https://osxfuse.github.io/) installed first.
 
 ## origins
 
@@ -131,3 +135,8 @@ func main() {
 	fmt.Printf("Excellent: all looks good.\n")
 }
 ~~~
+
+license
+-------
+
+[MIT license](http://opensource.org/licenses/mit-license.php). See enclosed LICENSE file.
