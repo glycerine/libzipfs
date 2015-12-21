@@ -20,7 +20,7 @@ func ReadFooter(combinedPath string) (offset int64, ft *Footer, comb *os.File, e
 	// cfg.OutputPath is our input now.
 	combi, err := os.Stat(combinedPath)
 	if err != nil {
-		return -1, nil, nil, fmt.Errorf("could not stat path '%s'", combinedPath, err)
+		return -1, nil, nil, fmt.Errorf("could not stat path '%s': '%s'", combinedPath, err)
 	}
 	VPrintf("\n combi = '%#v'\n", combi)
 
@@ -32,19 +32,19 @@ func ReadFooter(combinedPath string) (offset int64, ft *Footer, comb *os.File, e
 
 	comb, err = os.Open(combinedPath)
 	if err != nil {
-		return -1, nil, nil, fmt.Errorf("could not open path '%s'", combinedPath, err)
+		return -1, nil, nil, fmt.Errorf("could not open path '%s': '%s'", combinedPath, err)
 	}
 
 	footerStartOffset, err := comb.Seek(-LIBZIPFS_FOOTER_LEN, 2)
 	if err != nil {
-		return -1, nil, nil, fmt.Errorf("could not seek to footer position inside file '%s'", combinedPath, err)
+		return -1, nil, nil, fmt.Errorf("could not seek to footer position inside file '%s': '%s'", combinedPath, err)
 	}
 	VPrintf("footerStartOffset = %d\n", footerStartOffset)
 
 	by := make([]byte, LIBZIPFS_FOOTER_LEN)
 	n, err := comb.Read(by)
 	if err != io.EOF && err != nil {
-		return -1, nil, nil, fmt.Errorf("could not read at footer position inside file '%s'", combinedPath, err)
+		return -1, nil, nil, fmt.Errorf("could not read at footer position inside file '%s': '%s'", combinedPath, err)
 	}
 	if n != LIBZIPFS_FOOTER_LEN {
 		return -1, nil, nil, fmt.Errorf("could not read the full footer length from file '%s' starting at offset %d: %d == bytes_read_in != LIBZIPFS_FOOTER_LEN == %d", combinedPath, footerStartOffset, n, LIBZIPFS_FOOTER_LEN)
