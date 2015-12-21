@@ -1,6 +1,6 @@
 all:
 	cd cmd/libzipfs-combiner && go install
-
+	cd cmd/mountzip && go install
 
 demo:
 	cd cmd/libzipfs-combiner && go install

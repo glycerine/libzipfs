@@ -138,7 +138,7 @@ func (p *FuseZipFs) Stop() error {
 func (p *FuseZipFs) Start() error {
 	var err error
 
-	if p.bytesAvail < 0 {
+	if p.bytesAvail <= 0 {
 		statinfo, err := os.Stat(p.ZipfilePath)
 		if err != nil {
 			return err
@@ -346,4 +346,22 @@ func (fh *FileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fus
 	}
 	resp.Data = buf[:n]
 	return err
+}
+
+// helper for reading in a loop. will panic on unknown error.
+func ShouldRetry(err error) bool {
+	if err == nil {
+		return false
+	}
+	switch e := err.(type) {
+	case *os.PathError:
+		if strings.HasSuffix(e.Error(), "interrupted system call") {
+			return true // EINTR, must simply retry.
+		}
+		panic(fmt.Errorf("got unknown os.PathError, e = '%#v'. e.Error()='%#v'\n", e, e.Error()))
+	default:
+		fmt.Printf("unknown err was '%#v' / '%s'\n", err, err.Error())
+		panic(err)
+	}
+	return false
 }

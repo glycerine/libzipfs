@@ -36,20 +36,32 @@ func Test004WeCanMountAnOffsetZipFile(t *testing.T) {
 		expectedFile := path.Join(mountPoint, "dirA", "dirB", "hello")
 		expectedFileContent := []byte("salutations\n")
 
-		fmt.Printf("\n   we should be able to read back a file from the mounted filesystem without errors.\n")
-		ef, err := os.Open(expectedFile)
-		cv.So(err, cv.ShouldBeNil)
-		cv.So(ef, cv.ShouldNotBeNil)
-		err = ef.Close()
-		cv.So(err, cv.ShouldBeNil)
+		fmt.Printf("\n   we should be able to read back a file from " +
+			"the mounted filesystem without errors.\n")
+		for {
+			ef, err := os.Open(expectedFile)
+			if ShouldRetry(err) {
+				continue
+			}
+			cv.So(err, cv.ShouldBeNil)
+			cv.So(ef, cv.ShouldNotBeNil)
+			err = ef.Close()
+			cv.So(err, cv.ShouldBeNil)
+			break
+		}
 
-		by, err := ioutil.ReadFile(expectedFile)
-		cv.So(err, cv.ShouldBeNil)
-		cv.So(len(expectedFileContent), cv.ShouldEqual, len(by))
-		diff, err := compareByteSlices(expectedFileContent, by, len(expectedFileContent))
-		cv.So(err, cv.ShouldBeNil)
-		cv.So(diff, cv.ShouldEqual, -1)
-
+		for {
+			by, err := ioutil.ReadFile(expectedFile)
+			if ShouldRetry(err) {
+				continue
+			}
+			cv.So(err, cv.ShouldBeNil)
+			cv.So(len(expectedFileContent), cv.ShouldEqual, len(by))
+			diff, err := compareByteSlices(expectedFileContent, by, len(expectedFileContent))
+			cv.So(err, cv.ShouldBeNil)
+			cv.So(diff, cv.ShouldEqual, -1)
+			break
+		}
 		err = z.Stop()
 		if err != nil {
 			panic(fmt.Sprintf("error: could not z.Stop() FuseZipFs for file '%s' at %s: '%s'", comboFile, mountPoint, err))
