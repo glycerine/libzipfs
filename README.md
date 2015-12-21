@@ -44,6 +44,15 @@ see for example the [libzipfs/cmd/mountzip/mountzip.go example source code.](htt
 Excellent. Works well and is very useful. I only use it on OSX and Linux. On OSX
 you need to have [OSX Fuse](https://osxfuse.github.io/) installed first.  On Linux you'll need to either `sudo yum install fuse` or `sudo apt-get install fuse-utils` to obtain the `/bin/fusermount` utility.
 
+## installation
+
+~~~
+$ go get -t -u -v github.com/glycerine/libzipfs
+$ cd $GOPATH/src/github.com/glycerine/libzipfs && make
+$ ## the libzipfs-combiner and mountzip utilities are now in your $GOPATH/bin
+$ ## be sure that $GOPATH/bin is added to your PATH env variable
+~~~
+
 ## origins
 
 This library is dervied from Tommi Virtanen's work https://github.com/bazil/zipfs,
@@ -163,6 +172,8 @@ func main() {
 The `mountzip` utility (see the source code in `libzipfs/cmd/mountzip/mountzip.go`) mounts a zip file of your choice on a directory of your choice.
 
 ~~~
+$ cd $GOPATH/src/github.com/glycerine/libzipfs
+$ make # installs the mountzip utility into $GOPATH/bin
 $ mountzip -help
 Usage of mountzip:
   -mnt string
