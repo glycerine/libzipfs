@@ -109,7 +109,7 @@ Usage of libzipfs-combiner:
   -split
     	split the output file back apart (instead of combine which is the default)
   -zip string
-    	path to the Zip file to embed file
+    	path to the Zip file to embed
 
 $ libzipfs-combiner --exe my.go.binary -o my.go.binary.combo -zip hi.zip
 ~~~
