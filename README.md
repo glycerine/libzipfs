@@ -1,8 +1,26 @@
 libzipfs
 ===========
 
-Ship a filesystem of media resources inside your golang web-app for complete
-standalone one-binary deployment. Embeds a zipfile inside your executable.
+~~~
+-------------------       ---------------
+| go executable   |       |  zip file   |
+-------------------       ---------------
+        \                        /
+         --> libzipfs-combiner <-
+                      |
+                      v
+----------------------------------------------------
+| go executable   |  zip file   |  256-byte footer |
+----------------------------------------------------
+~~~
+
+
+Libzipfs lets you ship a filesystem of media resources inside your
+golang application.  This is done by attaching a zipfile containing
+the directories of your choice to the end of your application, and
+following it with a short footer to allow the go executable to
+locate the files and serve them to itself or other applications
+via a fuse mountpoint.
 
 ## Use cases
 
@@ -45,6 +63,8 @@ and a zipfile. The structure of the combined file looks like this:
 ----------------------------------------------------
 | executable      |  zip file   |  256-byte footer |
 ----------------------------------------------------
+^                                                  ^
+byte 0                                           byte N
 ~~~
 
 The embedded zip file will be access and served via a fuse mountpoint.
