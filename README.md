@@ -1,6 +1,9 @@
 libzipfs
 ===========
 
+Ship a filesystem of media resources inside your golang web-app for complete
+standalone one-binary deployment. Embeds a zipfile inside your executable.
+
 ## Use cases
 
 1. You have a bunch of images/scripts/files to be served from a webserving application,
@@ -22,6 +25,11 @@ This library is dervied from Tommi Virtanen's work https://github.com/bazil/zipf
 which is fantastic and provides a fuse-mounted read-only filesystem from a zipfile.
 zipfs and https://github.com/bazil/fuse are doing the heavy lifting 
 behind the scenes.
+
+The project was inspired by https://github.com/bazil/zipfs and https://github.com/shurcooL/vfsgen
+
+In particular, vfsgen is a similar approach, but I needed the ability to serve files to legacy code that
+expects to read from a file system.
 
 ## libzipfs then goes a step beyond what zipfs provides
 
@@ -66,7 +74,7 @@ $ libzipfs-combiner --exe my.go.binary -o my.go.binary.combo -zip my.media.zip
 
 ### api/code code inside your `my.go.binary.combo` binary:
 
-See testfiles/api.go for a full demo:
+type `make demo` and see testfiles/api.go for a full demo:
 
 ~~~
 package main

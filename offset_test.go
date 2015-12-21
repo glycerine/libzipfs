@@ -142,6 +142,24 @@ func Test006WeCanMountAnOffsetComboFile(t *testing.T) {
 		fmt.Printf("\n   we should be able to read back a file from the mounted filesystem without errors.\n")
 		ef, err := os.Open(expectedFile)
 		cv.So(err, cv.ShouldBeNil)
+		/* on osx, sporadically getting instead of nil:
+		Failures:
+
+		  * /Users/jaten/go/src/github.com/glycerine/libzipfs/offset_test.go
+		  Line 144:
+		  Expected: nil
+		  Actual:   'open /var/folders/2x/hm9gp5ys3k9gmm5f_vzm_6wc0000gn/T/libzipfs088835288/dirA/dirB/hello: interrupted system call'
+
+		  * /Users/jaten/go/src/github.com/glycerine/libzipfs/offset_test.go
+		  Line 145:
+		  Expected '<nil>' to NOT be nil (but it was)!
+
+		  * /Users/jaten/go/src/github.com/glycerine/libzipfs/offset_test.go
+		  Line 147:
+		  Expected: nil
+		  Actual:   'invalid argument'
+
+		*/
 		cv.So(ef, cv.ShouldNotBeNil)
 		err = ef.Close()
 		cv.So(err, cv.ShouldBeNil)

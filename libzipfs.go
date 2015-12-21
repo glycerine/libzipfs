@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	zip "github.com/glycerine/libzipfs/ezip"
+	"archive/zip"
 
 	"bazil.org/fuse"
 	"bazil.org/fuse/fs"
@@ -35,11 +35,14 @@ type FuseZipFs struct {
 	conn     *fuse.Conn
 
 	filesys *FS
-	archive *zip.ReadCloser
+	//archive *zip.ReadCloser
+	archive *zip.Reader
 
 	offset      int64
 	bytesAvail  int64 // -1 => unknown
 	footerBytes int64
+
+	fd *os.File
 }
 
 // Mount a possibly combined/zipfile at mountpiont. Call Start() to start servicing fuse reads.
@@ -117,7 +120,7 @@ func (p *FuseZipFs) Stop() error {
 	p.stopped = true
 	<-p.Done
 
-	p.archive.Close()
+	p.fd.Close()
 	p.conn.Close()
 
 	//  we don't do the following anymore since forcing the unmount
@@ -146,7 +149,14 @@ func (p *FuseZipFs) Start() error {
 		}
 	}
 
-	p.archive, err = zip.OpenReaderAt(p.ZipfilePath, p.offset, p.bytesAvail)
+	fd, err := os.Open(p.ZipfilePath)
+	if err != nil {
+		return err
+	}
+	p.fd = fd
+	rat := io.NewSectionReader(p.fd, p.offset, p.bytesAvail)
+
+	p.archive, err = zip.NewReader(rat, p.bytesAvail)
 	if err != nil {
 		return err
 	}
@@ -158,7 +168,7 @@ func (p *FuseZipFs) Start() error {
 	p.conn = c
 
 	p.filesys = &FS{
-		archive: &p.archive.Reader,
+		archive: p.archive,
 	}
 
 	go func() {
