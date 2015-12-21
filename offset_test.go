@@ -99,19 +99,30 @@ func Test004bWeCanMountARegularZipFile(t *testing.T) {
 		expectedFileContent := []byte("salutations\n")
 
 		fmt.Printf("\n   we should be able to read back a file from the mounted filesystem without errors.\n")
-		ef, err := os.Open(expectedFile)
-		cv.So(err, cv.ShouldBeNil)
-		cv.So(ef, cv.ShouldNotBeNil)
-		err = ef.Close()
-		cv.So(err, cv.ShouldBeNil)
+		for {
+			ef, err := os.Open(expectedFile)
+			if ShouldRetry(err) {
+				continue
+			}
+			cv.So(err, cv.ShouldBeNil)
+			cv.So(ef, cv.ShouldNotBeNil)
+			err = ef.Close()
+			cv.So(err, cv.ShouldBeNil)
+			break
+		}
 
-		by, err := ioutil.ReadFile(expectedFile)
-		cv.So(err, cv.ShouldBeNil)
-		cv.So(len(expectedFileContent), cv.ShouldEqual, len(by))
-		diff, err := compareByteSlices(expectedFileContent, by, len(expectedFileContent))
-		cv.So(err, cv.ShouldBeNil)
-		cv.So(diff, cv.ShouldEqual, -1)
-
+		for {
+			by, err := ioutil.ReadFile(expectedFile)
+			if ShouldRetry(err) {
+				continue
+			}
+			cv.So(err, cv.ShouldBeNil)
+			cv.So(len(expectedFileContent), cv.ShouldEqual, len(by))
+			diff, err := compareByteSlices(expectedFileContent, by, len(expectedFileContent))
+			cv.So(err, cv.ShouldBeNil)
+			cv.So(diff, cv.ShouldEqual, -1)
+			break
+		}
 		err = z.Stop()
 		if err != nil {
 			panic(fmt.Sprintf("error: could not z.Stop() FuseZipFs for file '%s' at %s: '%s'", comboFile, mountPoint, err))
@@ -152,37 +163,30 @@ func Test006WeCanMountAnOffsetComboFile(t *testing.T) {
 		expectedFileContent := []byte("salutations\n")
 
 		fmt.Printf("\n   we should be able to read back a file from the mounted filesystem without errors.\n")
-		ef, err := os.Open(expectedFile)
-		cv.So(err, cv.ShouldBeNil)
-		/* on osx, sporadically getting instead of nil:
-		Failures:
+		for {
+			ef, err := os.Open(expectedFile)
+			if ShouldRetry(err) {
+				continue
+			}
+			cv.So(err, cv.ShouldBeNil)
+			cv.So(ef, cv.ShouldNotBeNil)
+			err = ef.Close()
+			cv.So(err, cv.ShouldBeNil)
+			break
+		}
 
-		  * /Users/jaten/go/src/github.com/glycerine/libzipfs/offset_test.go
-		  Line 144:
-		  Expected: nil
-		  Actual:   'open /var/folders/2x/hm9gp5ys3k9gmm5f_vzm_6wc0000gn/T/libzipfs088835288/dirA/dirB/hello: interrupted system call'
-
-		  * /Users/jaten/go/src/github.com/glycerine/libzipfs/offset_test.go
-		  Line 145:
-		  Expected '<nil>' to NOT be nil (but it was)!
-
-		  * /Users/jaten/go/src/github.com/glycerine/libzipfs/offset_test.go
-		  Line 147:
-		  Expected: nil
-		  Actual:   'invalid argument'
-
-		*/
-		cv.So(ef, cv.ShouldNotBeNil)
-		err = ef.Close()
-		cv.So(err, cv.ShouldBeNil)
-
-		by, err := ioutil.ReadFile(expectedFile)
-		cv.So(err, cv.ShouldBeNil)
-		cv.So(len(expectedFileContent), cv.ShouldEqual, len(by))
-		diff, err := compareByteSlices(expectedFileContent, by, len(expectedFileContent))
-		cv.So(err, cv.ShouldBeNil)
-		cv.So(diff, cv.ShouldEqual, -1)
-
+		for {
+			by, err := ioutil.ReadFile(expectedFile)
+			if ShouldRetry(err) {
+				continue
+			}
+			cv.So(err, cv.ShouldBeNil)
+			cv.So(len(expectedFileContent), cv.ShouldEqual, len(by))
+			diff, err := compareByteSlices(expectedFileContent, by, len(expectedFileContent))
+			cv.So(err, cv.ShouldBeNil)
+			cv.So(diff, cv.ShouldEqual, -1)
+			break
+		}
 		err = z.Stop()
 		if err != nil {
 			panic(fmt.Sprintf("error: could not z.Stop() FuseZipFs for file '%s' at %s: '%s'", comboFile, mountPoint, err))

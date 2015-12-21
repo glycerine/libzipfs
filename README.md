@@ -156,6 +156,24 @@ func main() {
 }
 ~~~
 
+## example number 2: mountzip
+
+The `mountzip` utility (see the source code in `libzipfs/cmd/mountzip/mountzip.go`) mounts a zip file of your choice on a directory of your choice.
+
+~~~
+$ mountzip -help
+Usage of mountzip:
+  -mnt string
+    	directory to fuse-mount the zipfile on
+  -zip string
+    	path to the zipfile to mount
+$
+$ mkdir /tmp/hi
+$ mountzip -zip testfiles/hi.zip -mnt /tmp/hi
+zipfile 'hi.zip' mounted at directory '/tmp/hi'. [press ctrl-c to exit and unmount]
+
+~~~
+
 license
 -------
 
