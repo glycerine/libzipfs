@@ -19,8 +19,10 @@ Libzipfs lets you ship a filesystem of media resources inside your
 golang application.  This is done by attaching a zipfile containing
 the directories of your choice to the end of your application, and
 following it with a short footer to allow the go executable to
-locate the files and serve them to itself or other applications
-via a fuse mountpoint.
+locate the files and serve them via a fuse mount point. The client
+will typically be either be Go or C embedded in the go executable,
+but can be another application alltogether. For the later use,
+see for example the [libzipfs/cmd/mountzip/mountzip.go example source code.](https://github.com/glycerine/libzipfs/blob/master/cmd/mountzip/mountzip.go)
 
 ## Use cases
 
