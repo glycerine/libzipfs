@@ -10,19 +10,19 @@ libzipfs
                       |
                       v
 ----------------------------------------------------
-| go executable   |  zip file   |  256-byte footer |
+| go executable   |  zip file   |  256-byte footer | = a new single executable with all media inside
 ----------------------------------------------------
 ~~~
 
 
 Libzipfs lets you ship a filesystem of media resources inside your
-golang application.  This is done by attaching a zipfile containing
+golang application.  This is done by attaching a Zip file containing
 the directories of your choice to the end of your application, and
 following it with a short footer to allow the go executable to
 locate the files and serve them via a fuse mount point. The client
 will typically be either be Go or C embedded in the go executable
-([see for example testfiles/api.go](https://github.com/glycerine/libzipfs/blob/master/testfiles/api.go) ), but can be another application
-alltogether. For the later use,
+([see for example testfiles/api.go](https://github.com/glycerine/libzipfs/blob/master/testfiles/api.go)), but can be another application
+altogether. For the later use,
 see for example the [libzipfs/cmd/mountzip/mountzip.go example source code.](https://github.com/glycerine/libzipfs/blob/master/cmd/mountzip/mountzip.go)
 
 ## Use cases
@@ -50,14 +50,17 @@ you need to have [OSX Fuse](https://osxfuse.github.io/) installed first.  On Lin
 ~~~
 $ go get -t -u -v github.com/glycerine/libzipfs
 $ cd $GOPATH/src/github.com/glycerine/libzipfs && make
-$ ## the libzipfs-combiner and mountzip utilities are now in your $GOPATH/bin
-$ ## be sure that $GOPATH/bin is added to your PATH env variable
+$ ## note 1: the libzipfs-combiner and mountzip utilities are now in your $GOPATH/bin
+$ ## note 2: be sure that $GOPATH/bin is added to your PATH env variable
+$ ##         e.g. in your ~/.bashrc you have: export PATH=$GOPATH/bin:$PATH
+$ go test -v  # to run the test suite
+$ make demo   # to see the demo code run
 ~~~
 
 ## origins
 
-This library is dervied from Tommi Virtanen's work https://github.com/bazil/zipfs,
-which is fantastic and provides a fuse-mounted read-only filesystem from a zipfile.
+The libzipfs library is derived from Tommi Virtanen's work https://github.com/bazil/zipfs,
+which is fantastic and provides a fuse-mounted read-only filesystem from a Zip file.
 The zipfs library and https://github.com/bazil/fuse are doing the heavy lifting 
 behind the scenes.
 
@@ -66,10 +69,11 @@ The project was inspired by https://github.com/bazil/zipfs and https://github.co
 In particular, vfsgen is a similar approach, but I needed the ability to serve files to legacy code that
 expects to read from a file system.
 
-## libzipfs then goes a step beyond what zipfs provides
+## libzipfs: a fully integrated solution
 
-We then add the ability to assemble a "combined" file from an executable
-and a zipfile. The structure of the combined file looks like this:
+Libzipfs builds on top of zipfs to allow developers the ability to assemble a "combined" file from an executable
+and a Zip file containing the directories you wish to have available to your application at runtime. 
+The structure of the combined file looks like this:
 
 ~~~
 ----------------------------------------------------
@@ -79,13 +83,14 @@ and a zipfile. The structure of the combined file looks like this:
 byte 0                                           byte N
 ~~~
 
-The embedded zip file can then be made available via a fuse mountpoint.
+The embedded Zip file (the middle part in the diagram above) can 
+then be made available via a fuse mountpoint.
 The Go executable will contain Go code to accomplish this. The 256-bite
 footer at the end of the file describes the location of the
 embedded zip file. The combined file is still an executable,
 and can be run directly.
 
-### creating a combined executable and zipfile
+### creating a combined executable and Zip file
 
 the `libzipfs-combiner` utility does this for you.
 
@@ -104,7 +109,7 @@ Usage of libzipfs-combiner:
   -split
     	split the output file back apart (instead of combine which is the default)
   -zip string
-    	path to the zipfile to embed file
+    	path to the Zip file to embed file
 
 $ libzipfs-combiner --exe my.go.binary -o my.go.binary.combo -zip hi.zip
 ~~~
@@ -178,13 +183,13 @@ $ make # installs the mountzip utility into $GOPATH/bin
 $ mountzip -help
 Usage of mountzip:
   -mnt string
-    	directory to fuse-mount the zipfile on
+    	directory to fuse-mount the Zip file on
   -zip string
-    	path to the zipfile to mount
+    	path to the Zip file to mount
 $
 $ mkdir /tmp/hi
 $ mountzip -zip testfiles/hi.zip -mnt /tmp/hi
-zipfile 'hi.zip' mounted at directory '/tmp/hi'. [press ctrl-c to exit and unmount]
+Zip file 'hi.zip' mounted at directory '/tmp/hi'. [press ctrl-c to exit and unmount]
 
 ~~~
 

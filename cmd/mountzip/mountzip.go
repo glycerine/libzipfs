@@ -20,8 +20,8 @@ type MntzipConfig struct {
 
 // call DefineFlags before myflags.Parse()
 func (c *MntzipConfig) DefineFlags(fs *flag.FlagSet) {
-	fs.StringVar(&c.ZipfilePath, "zip", "", "path to the zipfile to mount")
-	fs.StringVar(&c.MountPath, "mnt", "", "directory to fuse-mount the zipfile on")
+	fs.StringVar(&c.ZipfilePath, "zip", "", "path to the Zip file to mount")
+	fs.StringVar(&c.MountPath, "mnt", "", "directory to fuse-mount the Zip file on")
 }
 
 // call c.ValidateConfig() after myflags.Parse()
@@ -74,7 +74,7 @@ func main() {
 	}
 	defer z.Stop() // stop serving files and unmount
 
-	fmt.Printf("\nzipfile '%s' mounted at directory '%s'. [press ctrl-c to exit and unmount]\n",
+	fmt.Printf("\nZip file '%s' mounted at directory '%s'. [press ctrl-c to exit and unmount]\n",
 		cfg.ZipfilePath, cfg.MountPath)
 
 	<-signalChan
