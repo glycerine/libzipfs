@@ -363,5 +363,4 @@ func ShouldRetry(err error) bool {
 		fmt.Printf("unknown err was '%#v' / '%s'\n", err, err.Error())
 		panic(err)
 	}
-	return false
 }
