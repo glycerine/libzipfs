@@ -52,7 +52,7 @@ and can be run directly.
 
 the `libzipfs-combiner` utility does this for you.
 
-For example: assuming that `my.go.binary` and `my.media.zip` already exist,
+For example: assuming that `my.go.binary` and `hi.zip` already exist,
 and you wish to create a new combo executable called `my.go.binary.combo`,
 you would do:
 
@@ -69,7 +69,7 @@ Usage of libzipfs-combiner:
   -zip string
     	path to the zipfile to embed file
 
-$ libzipfs-combiner --exe my.go.binary -o my.go.binary.combo -zip my.media.zip
+$ libzipfs-combiner --exe my.go.binary -o my.go.binary.combo -zip hi.zip
 ~~~
 
 ### api/code code inside your `my.go.binary.combo` binary:
@@ -102,7 +102,7 @@ func main() {
 	}
 	defer z.Stop() // if you want to stop serving files
 
-	// access the files from `my.media.zip` at mountpoint
+	// access the files from `hi.zip` at mountpoint
 
 	by, err := ioutil.ReadFile(path.Join(mountpoint, "dirA", "dirB", "hello"))
 	if err != nil {
