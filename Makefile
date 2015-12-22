@@ -26,13 +26,13 @@ demo:
 
 
 # This is not a great demo under a makefile, but still demonstrates 
-# steps you would do manually during the process of inspecting your combo file
+# steps you would do manually during the process of inspecting your combo file's
 # Zip contents by mounting it with mountzip.
 #
 # Possible bad side effect: if you are running other mountzip, this will pkill them too.
 demo2:
 	cd cmd/mountzip && go install
-	rmdir testfiles/mnt || true
+	rmdir testfiles/mnt || true # it is okay if this complains. We are just trying to cleanup any previous attempt.
 	mkdir testfiles/mnt
 	${GOPATH}/bin/mountzip -zip testfiles/expectedCombined -mnt testfiles/mnt &
 	sleep 1
