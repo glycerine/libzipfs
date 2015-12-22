@@ -14,13 +14,19 @@ demo:
 	./api-demo-combo
 
 
-# not great under a makefile, but demonstrates the process of inspecting your combo file
-demo2: # osx only, may very well leave testfiles/mnt mounted at the end.
+# This is not a great demo under a makefile, but still demonstrates 
+# steps you would do manually during the process of inspecting your combo file
+# Zip contents by mounting it with mountzip.
+#
+# Possible bad side effect: if you are running other mountzip, this will pkill them too.
+demo2:
 	cd cmd/mountzip && go install
 	mkdir testfiles/mnt
-	mountzip -zip testfiles/expectedCombined -mnt testfiles/mnt &
-	sleep 1 && cat testfiles/mnt/dirA/dirB/hello
+	${GOPATH}/bin/mountzip -zip testfiles/expectedCombined -mnt testfiles/mnt &
+	sleep 1
+	cat testfiles/mnt/dirA/dirB/hello
 	pkill mountzip
 	sleep 1
-	umount ${curdir}/testfiles/mnt || fusermount -u ${curdir}/testfiles/mnt # on linux: fusermount -u instead.
+	# the next line should use 'umount' on OSX, and 'fusermount -u' on linux
+	umount ${curdir}/testfiles/mnt || fusermount -u ${curdir}/testfiles/mnt
 	rmdir testfiles/mnt
