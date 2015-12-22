@@ -36,7 +36,7 @@ demo2:
 	mkdir testfiles/mnt
 	${GOPATH}/bin/mountzip -zip testfiles/expectedCombined -mnt testfiles/mnt &
 	sleep 1
-	# next line should output 'saluations'
+	# next line should output 'salutations'
 	cat testfiles/mnt/dirA/dirB/hello
 	diff testfiles/mnt/dirA/dirB/hello testfiles/expected.hello
 	pkill mountzip
