@@ -94,7 +94,7 @@ func WaitUntilUnmounted(mountPoint string) error {
 		}
 		time.Sleep(dur)
 	}
-	return fmt.Errorf("WaitUntilUnmounted() error: mount point '%s' in %s output was always present, "+
+	return fmt.Errorf("WaitUntilUnmounted() error: mount point '%s' in (output of %s invocation) was always present, "+
 		"even after %d waits with %v sleep between each.", mountPoint, utilLoc.MountPath, tries, dur)
 }
 
