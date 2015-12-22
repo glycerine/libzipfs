@@ -41,5 +41,7 @@ demo2:
 	diff testfiles/mnt/dirA/dirB/hello testfiles/expected.hello
 	pkill mountzip
 	sleep 1
+	# mountzip will try to umount, but it can't always succeed, depending on what the kernel thinks.
+	# Hence we do an additional umount attempt following the sleep 1 above. This generally succeeds.
 	$(UMOUNT) ${curdir}/testfiles/mnt
 	rmdir testfiles/mnt
