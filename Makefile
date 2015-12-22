@@ -32,7 +32,7 @@ demo:
 # Possible bad side effect: if you are running other mountzip, this will pkill them too.
 demo2:
 	cd cmd/mountzip && go install
-	rmdir testfiles/mnt
+	rmdir testfiles/mnt || true
 	mkdir testfiles/mnt
 	${GOPATH}/bin/mountzip -zip testfiles/expectedCombined -mnt testfiles/mnt &
 	sleep 1
