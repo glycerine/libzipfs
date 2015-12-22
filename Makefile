@@ -32,13 +32,14 @@ demo:
 # Possible bad side effect: if you are running other mountzip, this will pkill them too.
 demo2:
 	cd cmd/mountzip && go install
+	rmdir testfiles/mnt
 	mkdir testfiles/mnt
 	${GOPATH}/bin/mountzip -zip testfiles/expectedCombined -mnt testfiles/mnt &
 	sleep 1
 	# next line should output 'saluations'
 	cat testfiles/mnt/dirA/dirB/hello
+	diff testfiles/mnt/dirA/dirB/hello testfiles/expected.hello
 	pkill mountzip
 	sleep 1
-	# the next line should use 'umount' on OSX, and 'fusermount -u' on linux
 	$(UMOUNT) ${curdir}/testfiles/mnt
 	rmdir testfiles/mnt
