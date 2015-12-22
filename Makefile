@@ -1,6 +1,17 @@
-.PHONY: all
+.PHONY: all demo demo2
 
 curdir = $(shell pwd)
+
+# determine appropriate umount command, which depends on OS.
+UMOUNT := fusermount -u
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+    UMOUNT = fusermount -u
+endif
+ifeq ($(UNAME_S),Darwin)
+    UMOUNT = umount
+endif
 
 all:
 	cd cmd/libzipfs-combiner && go install
@@ -24,9 +35,10 @@ demo2:
 	mkdir testfiles/mnt
 	${GOPATH}/bin/mountzip -zip testfiles/expectedCombined -mnt testfiles/mnt &
 	sleep 1
+	# next line should output 'saluations'
 	cat testfiles/mnt/dirA/dirB/hello
 	pkill mountzip
 	sleep 1
 	# the next line should use 'umount' on OSX, and 'fusermount -u' on linux
-	umount ${curdir}/testfiles/mnt || fusermount -u ${curdir}/testfiles/mnt
+	$(UMOUNT) ${curdir}/testfiles/mnt
 	rmdir testfiles/mnt
