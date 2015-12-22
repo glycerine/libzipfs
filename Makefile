@@ -21,5 +21,6 @@ demo2: # osx only, may very well leave testfiles/mnt mounted at the end.
 	mountzip -zip testfiles/expectedCombined -mnt testfiles/mnt &
 	sleep 1 && cat testfiles/mnt/dirA/dirB/hello
 	pkill mountzip
-	sleep 1 && umount ${curdir}/testfiles/mnt # on linux: fusermount -u instead.
+	sleep 1
+	umount ${curdir}/testfiles/mnt || fusermount -u ${curdir}/testfiles/mnt # on linux: fusermount -u instead.
 	rmdir testfiles/mnt
