@@ -1,2 +1,2 @@
 package libzipfs
-func init() { GITLASTTAG = "v1.1"; GITLASTCOMMIT = "d1c55b62addfcd35b6e98651d77ebc9fc7fedfd0" }
+func init() { GITLASTTAG = "v1.2"; GITLASTCOMMIT = "9ed947e616b5ba61c6a6707636d8fe8dbf269cff" }
