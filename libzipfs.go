@@ -16,6 +16,23 @@ import (
 	"golang.org/x/net/context"
 )
 
+// track git version of this lib
+var GITLASTTAG string    // git describe --abbrev=0 --tags
+var GITLASTCOMMIT string // git rev-parse HEAD
+
+func VersionString() string {
+	return fmt.Sprintf("%s/%s", GITLASTTAG, GITLASTCOMMIT)
+}
+
+func DisplayVersionAndExitIfRequested() {
+	for i := range os.Args {
+		if os.Args[i] == "-version" || os.Args[i] == "--version" {
+			fmt.Printf("%s\n", VersionString())
+			os.Exit(0)
+		}
+	}
+}
+
 // We assume the zip file contains entries for directories too.
 
 var progName = filepath.Base(os.Args[0])

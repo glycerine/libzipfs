@@ -14,6 +14,8 @@ ifeq ($(UNAME_S),Darwin)
 endif
 
 all:
+	/bin/echo "package libzipfs" > gitcommit.go
+	/bin/echo "func init() { GITLASTTAG = \"$(shell git describe --abbrev=0 --tags)\"; GITLASTCOMMIT = \"$(shell git rev-parse HEAD)\" }" >> gitcommit.go
 	cd cmd/libzipfs-combiner && go install
 	cd cmd/mountzip && go install
 

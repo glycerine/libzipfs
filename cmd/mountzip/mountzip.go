@@ -45,6 +45,7 @@ func (c *MntzipConfig) ValidateConfig() error {
 }
 
 func main() {
+	libzipfs.DisplayVersionAndExitIfRequested()
 
 	// grab ctrl-c
 	ctrl_C_chan := make(chan os.Signal, 1)

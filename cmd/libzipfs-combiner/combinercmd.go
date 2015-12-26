@@ -23,6 +23,7 @@ func usage() {
 }
 
 func main() {
+	lzf.DisplayVersionAndExitIfRequested()
 
 	myflags := flag.NewFlagSet(progName, flag.ExitOnError)
 	cfg := &lzf.CombinerConfig{}
