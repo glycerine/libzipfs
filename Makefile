@@ -1,4 +1,4 @@
-.PHONY: all demo demo2
+.PHONY: all demo demo2 install clean
 
 curdir = $(shell pwd)
 
@@ -18,6 +18,11 @@ all:
 	/bin/echo "func init() { GITLASTTAG = \"$(shell git describe --abbrev=0 --tags)\"; GITLASTCOMMIT = \"$(shell git rev-parse HEAD)\" }" >> gitcommit.go
 	cd cmd/libzipfs-combiner && go install
 	cd cmd/mountzip && go install
+
+install: all
+
+clean:
+	rm -f api-demo-combo api-demo cmd/libzipfs-combiner/libzipfs-combiner *~
 
 demo:
 	cd cmd/libzipfs-combiner && go install
