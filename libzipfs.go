@@ -68,6 +68,10 @@ type FuseZipFs struct {
 // The bytesAvail value should describe how long the zipfile is in bytes, and byteOffsetToZipFileStart
 // should describe how far into the (possibly combined) zipFilePath the actual zipfile starts.
 func NewFuseZipFs(zipFilePath, mountpoint string, byteOffsetToZipFileStart int64, bytesAvail int64, footerBytes int64) *FuseZipFs {
+
+	// must trim any trailing slash from the mountpoint, or else mount can fail
+	mountpoint = TrimTrailingSlashes(mountpoint)
+
 	p := &FuseZipFs{
 		ZipfilePath: zipFilePath,
 		MountPoint:  mountpoint,
