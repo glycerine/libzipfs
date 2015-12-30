@@ -29,7 +29,7 @@ func main() {
 	}
 	defer z.Stop() // if you want to stop serving files
 
-	// access the files from `my.media.zip` at mountpoint
+	// access the file from `hi.zip` at mountpoint
 
 	// since we may get EINTR and have to retry, we loop over ReadFile()
 	var by []byte
